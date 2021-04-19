@@ -25,16 +25,16 @@
 <meta property="og:site_name" content="CY">
 <meta property="og:description" content="摘要 联合学习是支持安全多方机器学习(ML)的最新技术:数据保存在所有者的设备上，模型的更新通过安全协议进行聚合。然而，这个过程假设一个可信的集中式基础设施来进行协调，并且客户端必须相信中央服务不使用客户端数据的副产品。除此之外，一组恶意客户端还可能通过执行中毒攻击来损害模型的性能。作为回应，我们提出了Biscotti:一种完全分散的对等(P2P)多方消息传递方法，它使用区块链和加密原语来协调">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://yao-chen-ecnu.github.io/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/images/image-20210419152954709.png">
-<meta property="og:image" content="https://yao-chen-ecnu.github.io/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/images/image-20210412141853247.png">
-<meta property="og:image" content="https://yao-chen-ecnu.github.io/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/images/image-20210412145250341.png">
-<meta property="og:image" content="https://yao-chen-ecnu.github.io/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/images/image-20210412145952331.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/image-20210419152954709.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/image-20210412141853247.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/image-20210412145250341.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/image-20210412145952331.png">
 <meta property="article:published_time" content="2021-04-15T04:35:08.489Z">
-<meta property="article:modified_time" content="2021-04-19T08:21:32.026Z">
+<meta property="article:modified_time" content="2021-04-19T08:35:05.973Z">
 <meta property="article:author" content="CY">
 <meta property="article:tag" content="区块链+联邦学习">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://yao-chen-ecnu.github.io/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/images/image-20210419152954709.png">
+<meta name="twitter:image" content="https://yao-chen-ecnu.github.io/images/image-20210419152954709.png">
   <!-- Canonical links -->
   <link rel="canonical" href="https://yao-chen-ecnu.github.io/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/index.html">
   
@@ -373,7 +373,7 @@
     </div>
     <div class="article-entry marked-body" itemprop="articleBody">
       
-        <p><img src="/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/images/image-20210419152954709.png" alt="image-20210419152954709"></p>
+        <p><img src="/images/image-20210419152954709.png" alt></p>
 <h2 id="摘要"><a class="markdownIt-Anchor" href="#摘要"></a> 摘要</h2>
 <p>联合学习是支持安全多方机器学习(ML)的最新技术:数据保存在所有者的设备上，模型的更新通过安全协议进行聚合。然而，这个过程假设一个可信的集中式基础设施来进行协调，并且客户端必须相信中央服务不使用客户端数据的副产品。除此之外，一组恶意客户端还可能通过执行中毒攻击来损害模型的性能。作为回应，我们提出了Biscotti:一种完全分散的对等(P2P)多方消息传递方法，它使用区块链和加密原语来协调对等客户端之间的隐私保护消息传递过程。我们的评估表明，Biscotti是可扩展的、容错的，并且能够抵御已知的攻击。例如，当系统中存在30%的对手时，Biscotti能够保护单个客户端更新的隐私，并保持全局模型的大规模性能。</p>
 <h2 id="背景"><a class="markdownIt-Anchor" href="#背景"></a> 背景</h2>
@@ -418,7 +418,7 @@
 </ol>
 <h3 id="总体设计"><a class="markdownIt-Anchor" href="#总体设计"></a> 总体设计：</h3>
 <p>每出一个块代表完成一次SGD迭代</p>
-<p><img src="/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/images/image-20210412141853247.png" alt="image-20210412141853247"></p>
+<p><img src="/images/image-20210412141853247.png" alt></p>
 <p>1：每个peer在本地计算SGD更新值，即梯度</p>
 <p>2：每个peer从一个noising peers中获取噪声，这个noising peers是由VRF算法挑选出来的</p>
 <p>3：每个peer为自己的梯度添加上噪声，那么现在得到了masked update</p>
@@ -443,10 +443,10 @@
 </li>
 </ul>
 <h2 id="区块链设计"><a class="markdownIt-Anchor" href="#区块链设计"></a> 区块链设计</h2>
-<p><img src="/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/images/image-20210412145250341.png" alt="image-20210412145250341"></p>
+<p><img src="/images/image-20210412145250341.png" alt></p>
 <p>为了验证聚合是真实计算的，需要在块中包含单个更新。然而，单独存储它们会泄露个人私人训练数据[13]、[20]的信息。使用polynomial commitments</p>
 <p>多项式承诺进行SGD更新，并将其映射到椭圆曲线上的一个点(详见附录C)。承诺通过隐藏个体更新来提供隐私，但是可以同态组合以验证aggregatorP㼿wiwas对全局模型的更新是诚实计算的。如果提交的更新列表等于总和，则以下等式成立:</p>
-<p><img src="/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/images/image-20210412145952331.png" alt="image-20210412145952331"></p>
+<p><img src="/images/image-20210412145952331.png" alt></p>
 <h2 id="根据权益进行角色选举"><a class="markdownIt-Anchor" href="#根据权益进行角色选举"></a> 根据权益进行角色选举</h2>
 
       
