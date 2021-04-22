@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>A Reliable and Accountable Privacy-Preserving Federated Learning Framework using the Blockchain | CY的博客</title>
+  <meta name="description" content="摘要 联合学习有望支持涉及大数据集、大规模分布式数据所有者和不可靠网络连接的协作学习应用。为了保护数据隐私，现有的FL方法采用(k，n)-门限秘密共享方案，基于对客户端的半诚实假设，在本地模型更新交换中实现安全多方计算，以增加数据大小为代价处理随机客户端退出。这些方法对客户采用半诚实的假设，因此容易受到恶意客户的攻击。在这项工作中，我们提出了一个基于区块链隐私保护的联合学习框架，该框架利用了区">
+<meta property="og:type" content="article">
+<meta property="og:title" content="A Reliable and Accountable Privacy-Preserving Federated Learning Framework using the Blockchain">
+<meta property="og:url" content="https://yao-chen-ecnu.github.io/2021/04/19/Poster%20%20A%20Reliable%20and%20Accountable%20Privacy-Preserving%20Federated%20Learning%20Framework%20using%20the%20Blockchain/index.html">
+<meta property="og:site_name" content="CY">
+<meta property="og:description" content="摘要 联合学习有望支持涉及大数据集、大规模分布式数据所有者和不可靠网络连接的协作学习应用。为了保护数据隐私，现有的FL方法采用(k，n)-门限秘密共享方案，基于对客户端的半诚实假设，在本地模型更新交换中实现安全多方计算，以增加数据大小为代价处理随机客户端退出。这些方法对客户采用半诚实的假设，因此容易受到恶意客户的攻击。在这项工作中，我们提出了一个基于区块链隐私保护的联合学习框架，该框架利用了区">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/image-20210419202316932.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/image-20210419204046377.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/image-20210419205648151.png">
+<meta property="article:published_time" content="2021-04-19T13:00:42.432Z">
+<meta property="article:modified_time" content="2021-04-22T07:09:09.145Z">
+<meta property="article:author" content="CY">
+<meta property="article:tag" content="区块链+联邦学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yao-chen-ecnu.github.io/images/image-20210419202316932.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://yao-chen-ecnu.github.io/2021/04/19/Poster%20%20A%20Reliable%20and%20Accountable%20Privacy-Preserving%20Federated%20Learning%20Framework%20using%20the%20Blockchain/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="CY" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    <link href="//cdn.jsdelivr.net/npm/katex@0.9.0/dist/katex.min.css" rel="stylesheet">
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/Yao-chen-ecnu" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar1.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">C Y</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Web Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> ShangHai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/">区块链</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8/">工具使用</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Solidity/" rel="tag">Solidity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%85%AC%E5%BC%8F/" rel="tag">公式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">区块链+联邦学习</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%95%E5%B1%8F/" rel="tag">投屏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">联邦学习</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/Solidity/" style="font-size: 13px;">Solidity</a> <a href="/tags/%E5%85%AC%E5%BC%8F/" style="font-size: 13px;">公式</a> <a href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 14px;">区块链+联邦学习</a> <a href="/tags/%E6%8A%95%E5%B1%8F/" style="font-size: 13px;">投屏</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13.5px;">算法</a> <a href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 13px;">联邦学习</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a><span class="archive-list-count">6</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/04/21/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" class="title">知识蒸馏</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-04-21T02:54:58.228Z" itemprop="datePublished">2021-04-21</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/04/20/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E6%80%BB%E7%BB%93/" class="title">论文阅读总结</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-04-20T02:25:20.737Z" itemprop="datePublished">2021-04-20</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/04/19/Poster%20%20A%20Reliable%20and%20Accountable%20Privacy-Preserving%20Federated%20Learning%20Framework%20using%20the%20Blockchain/" class="title">A Reliable and Accountable Privacy-Preserving Federated Learning Framework using the Blockchain</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-04-19T13:00:42.432Z" itemprop="datePublished">2021-04-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/04/19/GFL%20A%20Decentralized%20Federated%20Learning%20Framework%20Based%20On%20Blockchain/" class="title">GFL A Decentralized Federated Learning Framework Based On Blockchain</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-04-19T12:22:21.792Z" itemprop="datePublished">2021-04-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/04/19/A%20Blockchain-based%20Decentralized%20Federated%20Learning%20Framework%20with%20Committee%20Consensus/" class="title">A Blockchain-based Decentralized Federated Learning Framework with Committee Consensus</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-04-19T06:57:34.057Z" itemprop="datePublished">2021-04-19</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-Poster  A Reliable and Accountable Privacy-Preserving Federated Learning Framework using the Blockchain" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      A Reliable and Accountable Privacy-Preserving Federated Learning Framework using the Blockchain
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/04/19/Poster%20%20A%20Reliable%20and%20Accountable%20Privacy-Preserving%20Federated%20Learning%20Framework%20using%20the%20Blockchain/" class="article-date">
+	  <time datetime="2021-04-19T13:00:42.432Z" itemprop="datePublished">2021-04-19</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">区块链+联邦学习</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/04/19/Poster%20%20A%20Reliable%20and%20Accountable%20Privacy-Preserving%20Federated%20Learning%20Framework%20using%20the%20Blockchain/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 2.7k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 9(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p><img src="/images/image-20210419202316932.png" alt></p>
+<h2 id="摘要"><a class="markdownIt-Anchor" href="#摘要"></a> 摘要</h2>
+<p>联合学习有望支持涉及大数据集、大规模分布式数据所有者和不可靠网络连接的协作学习应用。为了保护数据隐私，现有的FL方法采用(k，n)-门限秘密共享方案，基于对客户端的半诚实假设，在本地模型更新交换中实现安全多方计算，以增加数据大小为代价处理随机客户端退出。这些方法对客户采用半诚实的假设，因此容易受到恶意客户的攻击。在这项工作中，我们提出了一个基于区块链隐私保护的联合学习框架，该框架利用了区块链的不变性和分散信任属性来提供模型更新的起源。我们基于BC的PPFL的概念验证实现证明了它对于联邦环境中本地模型更新的安全聚合是实用的。</p>
+<h2 id="引言"><a class="markdownIt-Anchor" href="#引言"></a> 引言</h2>
+<p>早期的FL设计假设中间结果，如随机梯度下降的参数更新，包含的信息比原始训练数据少[6]。因此，短暂的更新经常被暴露。然而，这些梯度可能会泄漏本地数据项的重要信息，尤其是当诸如数据结构的元数据可用时。为了解决这个问题，最近已经提出了几种用于FL的安全聚合算法[2，3]，利用<strong>秘密共享和差分隐私</strong>技术。然而，这些方法假设参与客户的松散联盟，这些客户可能加入或不加入学习任务，因此遭受随机客户退出。[3]提出采用(k，n)-门限秘密共享来提高对退出的鲁棒性。事实上，<strong>这些方案的安全保障植根于对客户的半诚实假设</strong>，即假设客户不得提交“假”更新，也不得相互勾结操纵学习过程或结果。。此外，几乎所有关于FL的现有工作都明确或隐含地采用简单的激励模型，该模型假设客户自愿参与协作学习，以他们的本地模型更新和计算资源换取改进的全局模型。这种扁平激励模型忽略了这样一个事实，即具有不同数据大小和计算能力的客户端在全局优化任务中做出不同的贡献，并且应该得到不同的奖励。</p>
+<p>本文的主要贡献：</p>
+<p>在这项工作中，我们提出了一个基于区块链隐私保护的联合学习框架。如图1所示，区块链互连了前端组件，如服务器、客户端和聚合器。它使用分布式交易分类账来记录关于前线任务、参与客户、本地和全球模型更新等的信息流。，在组件中。不可变分类帐通过跟踪每个FL任务中的数据流来支持数据起源，并提供了一个良好的信任基础来构建现有FL方法缺乏的验证机制。有了这样的验证机制，我们可以进一步将半诚实客户端假设扩展到更现实的恶意客户端假设，在这种假设下，一个客户端可以退出，提交虚假的本地更新，或者与其他恶意客户端串通。此外，利用分布式分类帐，服务器以及FL任务中的其他感兴趣的实体(例如，客户端和聚合器)可以跟踪每个客户端对全局优化的学习模型的贡献，这使得基于贡献的激励机制成为可能。在此基础上，我们可以进一步引入改进模型所有权的溢价，并相应地奖励矿工。</p>
+<p><img src="/images/image-20210419204046377.png" alt></p>
+<h2 id="框架设计"><a class="markdownIt-Anchor" href="#框架设计"></a> 框架设计</h2>
+<h3 id="1-联邦学习模型"><a class="markdownIt-Anchor" href="#1-联邦学习模型"></a> 1、联邦学习模型：</h3>
+<p>联邦平均模型</p>
+<p>基于BC的PPFL的主要隐私目标是(a)保护本地数据私有；(b)保护本地数据不受服务器的影响，不将个别本地模型更新泄露给服务器；以及©保护本地和全局模型更新不受无关的内部(即聚合器、矿工)和外部实体的影响。同时，安全目标是确保(a)来自承诺客户的本地模型更新的机密性和完整性，以及(b)模型更新的来源。</p>
+<h3 id="2-架构设计"><a class="markdownIt-Anchor" href="#2-架构设计"></a> 2、架构设计</h3>
+<p>为了实现安全和隐私保护目标，我们提出了一个基于业务连续性的PPFL框架，它由五个组件组成，如图1所示。对于FL任务，服务器首先通告任务规范，例如应用程序的类型(例如，击键或活动预测)、设备的类型、训练数据的类型和格式(例如，陀螺仪或运动传感器数据、浮点格式)、学习模型的类型(例如，CNN)、计算要求(例如，学习速率)和任务设置(例如，聚合器、所需客户端的数量、批量大小等)。)</p>
+<p>在任务事务中。愿意加入任务的客户端向聚合器注册，然后聚合器为所有提交的客户端创建一个提交事务。最后，矿工将所有交易记录到分类账中。</p>
+<p>在FL任务期间，服务器首先与所有提交的客户端共享初始模型。为了模型隐私，这个初始模型在<strong>保护模式</strong>下共享。然后，客户端根据其本地训练数据计算本地模型更新，并将更新后的模型参数上传到聚合器。聚合器在同一批中收到的所有更新将被打包到本地更新事务中，并在矿工的帮助下记录到分类帐中。</p>
+<h3 id="3-出块"><a class="markdownIt-Anchor" href="#3-出块"></a> 3、出块</h3>
+<p>基于BC的PPFL依赖于三个构建块来提供FL中的数据隐私和出处</p>
+<h4 id="同态加密和代理重加密"><a class="markdownIt-Anchor" href="#同态加密和代理重加密"></a> 同态加密和代理重加密</h4>
+<p>现有的大多数隐私保护联合学习方法都采用秘密共享方案来实现安全多方计算，这种方法存在随机客户端退出的问题。为了解决这个问题，我们采用了由克莱姆和肖普[4]提出的具有两个陷门函数的Paillier密码系统的变体，以在模型交换期间保护局部模型</p>
+<p>在我们的设计中，服务器为每个任务生成一对公共和私有任务密钥，并将公共任务密钥包含在任务规范中，而任务中涉及的每个聚合器生成一对公共和私有批处理密钥，并将公共批处理密钥分发到每个提交的客户端。任务密钥和批密钥以这样的形式构造，即批密钥是相应任务密钥的转换密钥，以支持代理重加密。因此，服务器不能直接恢复记录在分类帐中的单个本地更新，而是仅在聚合器聚合更新并用转换密钥重新加密后恢复聚合值。</p>
+<h4 id="区块链"><a class="markdownIt-Anchor" href="#区块链"></a> 区块链</h4>
+<p>值得注意的是，对于大型数据集上的大型模型更新，我们可以将加密的模型更新存储在分布式数据库中，如IPFS [1]，并且只记录区块链的地址。</p>
+<h4 id="验证"><a class="markdownIt-Anchor" href="#验证"></a> 验证</h4>
+<p>验证器可以批量检索客户端的所有更新，生成排除来自可疑客户端的输入的集合，并且比较验证前后全局模型的性能。在初步实验中，我们实现了基本验证功能，其中服务器充当验证器，在每轮恢复聚合后评估梯度。它使用损失函数比较更新后的全局模型与该轮初始模型的性能。</p>
+<h3 id="4-实现与评估"><a class="markdownIt-Anchor" href="#4-实现与评估"></a> 4、实现与评估</h3>
+<ul>
+<li>在Python中开发了Paillier密码系统的变体，以实现同态加密和代理重加密</li>
+<li>区块链基于以太坊和truffle框架</li>
+<li>使用PyTorch实现深度学习训练</li>
+</ul>
+<p>我们使用简单的两层神经网络构建了二进制分类器，并使用来自UCI机器学习库的乳腺癌数据集作为训练数据。数据集有569个样本和30个特征。对于我们框架中使用的所有三种密码系统，我们生成了默认长度为2048位的公钥和私钥对。</p>
+<p>我们在亚马逊EC2 t2.micro实例上运行了区块链，该实例具有1千兆内存和3.3千兆赫英特尔可扩展处理器。对于服务器、聚合器和客户端节点，我们采用了两种设置:在设置一中，我们在2 GHz英特尔酷睿i5处理器和3 GiB内存的笔记本电脑上运行所有三种类型的节点，它们可以从这里与亚马逊EC2上实现的区块链进行交互；在设置二中，我们也在亚马逊EC2实例上运行它们，这最小化了通信延迟，因为所有实例都在同一个云平台上。未来，我们将通过在多个云平台上部署不同的节点，进一步研究我们框架的可扩展性和通信延迟。</p>
+<h4 id="评估"><a class="markdownIt-Anchor" href="#评估"></a> 评估</h4>
+<p>我们首先在10个客户中随机划分训练数据，每个客户有50个来自IID划分数据的例子。然后，我们测量了不同FL操作的执行时间</p>
+<p>我们重复了四次模型训练，并计算了单次迭代的平均执行时间，如表1所示。显然，在这两种设置下，在所有FL操作中，聚集梯度并将结果写入区块链是计算成本最高的操作。每次迭代的平均执行时间是所有FL操作的总和，在设置一和设置二中分别是1.62和1.27秒。这两种设置之间的差异表明了向区块链读写所引入的通信成本。</p>
+<p><img src="/images/image-20210419205648151.png" alt></p>
+<p>因此，我们将客户机批处理大小增加到20、30和40，并测量了执行时间。平均执行时间从10个客户端的1.62秒分别增加到20、30和40个客户端的1.73、2.36和2.43秒。这表明客户端数量的增加导致协议执行时间的次线性增加。</p>
+<h2 id="结论"><a class="markdownIt-Anchor" href="#结论"></a> 结论</h2>
+<p>在未来，我们将探索联合优化，在客户端的每个训练阶段结合小批量，并增加多客户端并行性，以实现目标测试集的准确性。我们还将考虑非IID分区数据，并根据客户的贡献调查奖励客户的激励计划。</p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://yao-chen-ecnu.github.io/2021/04/19/Poster%20%20A%20Reliable%20and%20Accountable%20Privacy-Preserving%20Federated%20Learning%20Framework%20using%20the%20Blockchain/" title="A Reliable and Accountable Privacy-Preserving Federated Learning Framework using the Blockchain" target="_blank" rel="external">https://yao-chen-ecnu.github.io/2021/04/19/Poster%20%20A%20Reliable%20and%20Accountable%20Privacy-Preserving%20Federated%20Learning%20Framework%20using%20the%20Blockchain/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/Yao-chen-ecnu" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar1.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/Yao-chen-ecnu" target="_blank"><span class="text-dark">C Y</span><small class="ml-1x">Web Developer &amp; Designer</small></a></h3>
+        <div>记录生活点点滴滴</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/04/20/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E6%80%BB%E7%BB%93/" title="论文阅读总结"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/04/19/GFL%20A%20Decentralized%20Federated%20Learning%20Framework%20Based%20On%20Blockchain/" title="GFL A Decentralized Federated Learning Framework Based On Blockchain"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+<script type="text/javascript" src="//cdn.bootcss.com/canvas-nest.js/1.0.0/canvas-nest.min.js"></script>
+</html>
