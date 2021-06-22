@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>A gift from KD | CY的博客</title>
+  <meta name="description" content="1、Knowledge Distillation 先是 Hinton 提出来的，大意是说：小模型在分类的时候，光用训练集里的 one-hot label 不好，因为这种标注把类别间的关系割裂开了。而如果让小模型跟着大模型输出的概率分布去学的话，就相当于给出了类别之间的相似性信息，提供了额外的监督信号，因此学起来更容易。比如说识别手写数字，同时标签为 3 的图片，可能有的比较像 8，有的比较像 2，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="A gift from KD">
+<meta property="og:url" content="https://yao-chen-ecnu.github.io/2021/06/22/A%20Gift%20from%20Knowledge%20Distillation/index.html">
+<meta property="og:site_name" content="CY">
+<meta property="og:description" content="1、Knowledge Distillation 先是 Hinton 提出来的，大意是说：小模型在分类的时候，光用训练集里的 one-hot label 不好，因为这种标注把类别间的关系割裂开了。而如果让小模型跟着大模型输出的概率分布去学的话，就相当于给出了类别之间的相似性信息，提供了额外的监督信号，因此学起来更容易。比如说识别手写数字，同时标签为 3 的图片，可能有的比较像 8，有的比较像 2，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610105533306.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610142150341.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610144757215.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610150122875.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610152500332.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610152832207.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610152929410.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610153004169.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610160243570.png">
+<meta property="article:published_time" content="2021-06-22T02:47:54.176Z">
+<meta property="article:modified_time" content="2021-06-22T03:11:55.897Z">
+<meta property="article:author" content="CY">
+<meta property="article:tag" content="知识蒸馏">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yao-chen-ecnu.github.io/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610105533306.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://yao-chen-ecnu.github.io/2021/06/22/A%20Gift%20from%20Knowledge%20Distillation/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="CY" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    <link href="//cdn.jsdelivr.net/npm/katex@0.9.0/dist/katex.min.css" rel="stylesheet">
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/Yao-chen-ecnu" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar1.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">C Y</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Web Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> ShangHai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/">区块链</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8/">工具使用</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">9</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Solidity/" rel="tag">Solidity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%85%AC%E5%BC%8F/" rel="tag">公式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">区块链+联邦学习</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%95%E5%B1%8F/" rel="tag">投屏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" rel="tag">知识蒸馏</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">联邦学习</a><span class="tag-list-count">4</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/Solidity/" style="font-size: 13px;">Solidity</a> <a href="/tags/%E5%85%AC%E5%BC%8F/" style="font-size: 13px;">公式</a> <a href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 14px;">区块链+联邦学习</a> <a href="/tags/%E6%8A%95%E5%B1%8F/" style="font-size: 13px;">投屏</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" style="font-size: 13.67px;">知识蒸馏</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13.33px;">算法</a> <a href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 13.67px;">联邦学习</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a><span class="archive-list-count">6</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/" class="title">Distilling the Knowledge in a Neural Network</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.194Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/DistilE/" class="title">DistillE</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.190Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/FedGKT/" class="title">FedGKT</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.185Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/FITNETS/" class="title">FitNets</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.180Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/A%20Gift%20from%20Knowledge%20Distillation/" class="title">A gift from KD</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.176Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-A Gift from Knowledge Distillation" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      A gift from KD
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/06/22/A%20Gift%20from%20Knowledge%20Distillation/" class="article-date">
+	  <time datetime="2021-06-22T02:47:54.176Z" itemprop="datePublished">2021-06-22</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" rel="tag">知识蒸馏</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/06/22/A%20Gift%20from%20Knowledge%20Distillation/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 2.7k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 10(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>1、Knowledge Distillation 先是 Hinton 提出来的，大意是说：小模型在分类的时候，光用训练集里的 one-hot label 不好，因为这种标注把类别间的关系割裂开了。而如果让小模型跟着大模型输出的概率分布去学的话，就相当于给出了类别之间的相似性信息，提供了额外的监督信号，因此学起来更容易。比如说识别手写数字，同时标签为 3 的图片，可能有的比较像 8，有的比较像 2，one-hot labels 区分不出来这个信息，但是一个 well-trained 大模型可以给出。因此，<strong>修改一下损失函数，让小模型在拟合训练数据的 ground truth labels 的同时，也要拟合大模型输出的概率分布。这个方法叫做 KD Training (Knowledge Distillation Training)。</strong></p>
+<p>2、然后 Romero 又提出了 FitNet，大意是说：直接让小模型在输出端模仿大模型，这个对于小模型来说太难了（模型越深越难训，最后一层的监督信号要传到前面去还是挺累的）。解决方案就是说，不如在中间加一些监督信号。于是训练的方法就是所谓的 <strong>hint training，把网络中间的输出也拿出来，让大模型和小模型中间层的输出也要尽量接近，让小模型去学习大模型做预测时的中间步骤。</strong></p>
+<p>实际做的时候是用**两阶段法：先用 hint training 去 pretrain 小模型前半部分的参数，再用 KD Training 去训练全体参数。**这感觉就好像是，我们的目的是让学生做高考题，那么就先把初中的题目给他教会了（先让小模型用前半个模型学会提取图像底层特征），然后再回到本来的目的、去学高考题（用 KD 调整小模型的全部参数）。</p>
+<p>3、之前的文章都是把大模型的输出当成小模型要去拟合的目标，后来又有文章提出了新的方法，不拟合大模型的输出，而是去拟合大模型层与层之间的关系，这才是转移和蒸馏的知识。这个关系是用层与层之间的内积来定义的。</p>
+<p>![](file://C:/Users/lenovo/source/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210608161654918.png?lastModify=1624331444)</p>
+<h2 id="abstract"><a class="markdownIt-Anchor" href="#abstract"></a> Abstract</h2>
+<p>提出了将蒸馏的知识看作成一种解决问题的流，它是在不同层之间的feature通过内积计算得到的</p>
+<p>这个方法有三个好处：</p>
+<ol>
+<li>student网络可以学的更快</li>
+<li>student网络可以超过teacher网路的性能</li>
+<li>可以适用于迁移学习（teacher和student属于不同的任务）</li>
+</ol>
+<h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+<p>将知识看作如何解决问题的流，所以将要蒸馏知识看作解决问题的流</p>
+<p>流被定义为在两个不同层上的features上的关系</p>
+<p>Gram matrix是通过计算特征间的内积得到的，可以表示输入图像的纹理信息，本文也是通过计算Gram matrix来得到流，不同点在于原本的Gram matrix是计算一个层的特征间的内积，而本文是结算不同层特征间的内积。</p>
+<p><img src="/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610105533306.png" alt></p>
+<p><strong>主要贡献：</strong></p>
+<p>提出了一种好的知识蒸馏的方法</p>
+<p>这种方法对快速优化有帮助</p>
+<p>这种方法可以显著提升student网络的性能</p>
+<p>这种方法适用于迁移学习</p>
+<h2 id="method"><a class="markdownIt-Anchor" href="#method"></a> Method</h2>
+<h3 id="提出观点"><a class="markdownIt-Anchor" href="#提出观点"></a> 提出观点</h3>
+<p>将输入和输出看作是问题和答案，中间层看作是解决问题的一个步骤，按照Fitnets的思路，会学习中间这个步骤，然而解决这个问题可以有很多路径，中间这个步骤的状态不一定是一种，所以Fitnets给了太多的限制，作者提出学习输入和输出的关系，而不是直接学习中间的步骤的状态</p>
+<h3 id="数学表达式"><a class="markdownIt-Anchor" href="#数学表达式"></a> 数学表达式</h3>
+<ul>
+<li><strong>表达式</strong></li>
+</ul>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>G</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>j</mi></mrow></msub><mo stretchy="false">(</mo><mi>x</mi><mo separator="true">;</mo><mi>W</mi><mo stretchy="false">)</mo><mo>=</mo><munderover><mo>∑</mo><mrow><mi>s</mi><mo>=</mo><mn>1</mn></mrow><mi>h</mi></munderover><munderover><mo>∑</mo><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow><mi>w</mi></munderover><mfrac><mrow><msubsup><mi>F</mi><mrow><mi>s</mi><mo separator="true">,</mo><mi>t</mi><mo separator="true">,</mo><mi>i</mi></mrow><mn>1</mn></msubsup><mo stretchy="false">(</mo><mi>x</mi><mo separator="true">;</mo><mi>W</mi><mo stretchy="false">)</mo><mo>×</mo><msubsup><mi>F</mi><mrow><mi>s</mi><mo separator="true">,</mo><mi>t</mi><mo separator="true">,</mo><mi>j</mi></mrow><mn>2</mn></msubsup><mo stretchy="false">(</mo><mi>x</mi><mo separator="true">;</mo><mi>W</mi><mo stretchy="false">)</mo></mrow><mrow><mi>h</mi><mo>×</mo><mi>w</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">G_{i, j}(x ; W)=\sum_{s=1}^{h} \sum_{t=1}^{w} \frac{F_{s, t, i}^{1}(x ; W) \times F_{s, t, j}^{2}(x ; W)}{h \times w}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.036108em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathdefault">x</span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.1032260000000003em;vertical-align:-1.267113em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8361130000000003em;"><span style="top:-1.882887em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">s</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.050005em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3000050000000005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">h</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.267113em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.6513970000000002em;"><span style="top:-1.882887em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">t</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.050005em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3000050000000005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.02691em;">w</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.267113em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.5988799999999999em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">h</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault" style="margin-right:0.02691em;">w</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.7847720000000002em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-2.441336em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">s</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">t</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">i</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.394772em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathdefault">x</span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-2.441336em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">s</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">t</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight" style="margin-right:0.05724em;">j</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.394772em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathdefault">x</span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.7693300000000001em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>FSP矩阵<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>G</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>m</mi><mo>×</mo><mi>n</mi></mrow></msup></mrow><annotation encoding="application/x-tex">G \in \mathbb{R}^{m \times n}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72243em;vertical-align:-0.0391em;"></span><span class="mord mathdefault">G</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.771331em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.771331em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">m</span><span class="mbin mtight">×</span><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span></span></span></span></span>由两层输出的特征来生成，其中一层的feature map为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>F</mi><mn>1</mn></msup><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>h</mi><mo>×</mo><mi>w</mi><mo>×</mo><mi>m</mi></mrow></msup></mrow><annotation encoding="application/x-tex">F^{1} \in \mathbb{R}^{h \times w \times m}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.853208em;vertical-align:-0.0391em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8491079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">h</span><span class="mbin mtight">×</span><span class="mord mathdefault mtight" style="margin-right:0.02691em;">w</span><span class="mbin mtight">×</span><span class="mord mathdefault mtight">m</span></span></span></span></span></span></span></span></span></span></span></span>，另外一层的feature map为$$F^{2} \in \mathbb{R}^{h \times w \times n}$$</p>
+<p>其中<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>i</mi><mi mathvariant="normal">，</mi><mi>j</mi></mrow><annotation encoding="application/x-tex">i，j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.85396em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">i</span><span class="mord cjk_fallback">，</span><span class="mord mathdefault" style="margin-right:0.05724em;">j</span></span></span></span>表示F1与F2的通道号，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span>和<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">W</span></span></span></span>分别代表输入图像和DNN的权重</p>
+<p>这个式子其实就是不同通道的特征的相互内积</p>
+<ul>
+<li><strong>计算G的位置</strong></li>
+</ul>
+<p><img src="/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610142150341.png" alt></p>
+<h3 id="fsp-matrix的损失"><a class="markdownIt-Anchor" href="#fsp-matrix的损失"></a> FSP Matrix的损失</h3>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mtable rowspacing="0.15999999999999992em" columnalign="left" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><msub><mi>L</mi><mrow><mi>F</mi><mi>S</mi><mi>P</mi></mrow></msub><mrow><mo fence="true">(</mo><msub><mi>W</mi><mi>t</mi></msub><mo separator="true">,</mo><msub><mi>W</mi><mi>s</mi></msub><mo fence="true">)</mo></mrow></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mo>=</mo><mfrac><mn>1</mn><mi>N</mi></mfrac><msub><mo>∑</mo><mi>x</mi></msub><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></msubsup><msub><mi>λ</mi><mi>i</mi></msub><mo>×</mo><mi mathvariant="normal">∥</mi><mrow><mo fence="true">(</mo><msubsup><mi>G</mi><mi>i</mi><mi>T</mi></msubsup><mrow><mo fence="true">(</mo><mi>x</mi><mo separator="true">;</mo><msub><mi>W</mi><mi>t</mi></msub><mo fence="true">)</mo></mrow><mo>−</mo><msubsup><mi>G</mi><mi>i</mi><mi>S</mi></msubsup><mrow><mo fence="true">(</mo><mi>x</mi><mo separator="true">;</mo><msub><mi>W</mi><mi>s</mi></msub><mo fence="true">)</mo></mrow><msubsup><mi mathvariant="normal">∥</mi><mn>2</mn><mn>2</mn></msubsup></mrow></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{array}{l}
+L_{F S P}\left(W_{t}, W_{s}\right) \\
+=\frac{1}{N} \sum_{x} \sum_{i=1}^{n} \lambda_{i} \times \|\left(G_{i}^{T}\left(x ; W_{t}\right)-G_{i}^{S}\left(x ; W_{s}\right) \|_{2}^{2}\right.
+\end{array}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.41em;vertical-align:-0.9550000000000001em;"></span><span class="mord"><span class="mtable"><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.455em;"><span style="top:-3.6149999999999998em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathdefault">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">F</span><span class="mord mathdefault mtight" style="margin-right:0.05764em;">S</span><span class="mord mathdefault mtight" style="margin-right:0.13889em;">P</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span></span></span><span style="top:-2.405em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.845108em;"><span style="top:-2.6550000000000002em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.0016819999999999613em;"><span style="top:-2.40029em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">x</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.29971000000000003em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.804292em;"><span style="top:-2.40029em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.29971000000000003em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault">λ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">∥</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size1">(</span></span><span class="mord"><span class="mord mathdefault">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-2.441336em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.258664em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord mathdefault">x</span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord mathdefault">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-2.441336em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.05764em;">S</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.258664em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord mathdefault">x</span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord">∥</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-2.4518920000000004em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24810799999999997em;"><span></span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9550000000000001em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span></span></span></span></span></span></span></p>
+<p>n代表在student中选择的层对数</p>
+<p>N表示样本数量</p>
+<p>T，S分别代表teacher和student</p>
+<h3 id="学习步骤"><a class="markdownIt-Anchor" href="#学习步骤"></a> 学习步骤</h3>
+<p>首先，对教师网络进行数据预训练。此数据集可以与学生网络将学习的数据集相同，也可以不同。对于迁移学习任务，教师网络使用不同于学生网络的数据集。其次，教师网络与学生网络相同或更深。</p>
+<p><img src="/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610144757215.png" alt></p>
+<h2 id="experiment"><a class="markdownIt-Anchor" href="#experiment"></a> Experiment</h2>
+<p>实验采用图2中的resnet，对于FSP矩阵的生成，选择每个残差块中的第一层和最后一层的feature map来计算。由于FSP矩阵需要两个feature map的大小相同，因此，在两层特征不同的情况下，引入最大值池化层进行处理，得到两个相同大小的feature map。</p>
+<p>baseline：Fitnet</p>
+<h3 id="fast-optimization"><a class="markdownIt-Anchor" href="#fast-optimization"></a> Fast optimization</h3>
+<p>本文提出的快速优化技术的目标是通过使用比正常训练程序更少的训练时间，使学生网络集成达到与教师网络集成相似的性能。</p>
+<p>在两个数据集上进行训练 CIFAR-10、 CIFAR-100</p>
+<p>使用26层残差网络作为教师网络，得到92%的准确度。本实验中学生网络与教师网络的层数相同。</p>
+<p><img src="/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610150122875.png" alt></p>
+<p>图3表示测试精度和训练损失随时间的变化。学生网络的优化速度快于教师网络。学生网络收敛的速度是教师网络的三倍。由于我们对教师网络采用MSRA初始化技术，这不是一种简单的初始化方法，而是一种高性能的初始化方法，因此我们认为FSP矩阵为初始化学生网络的权值提供了很好的提取知识。</p>
+<p><img src="/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610152500332.png" alt></p>
+<p><strong>关于Student与FitNet的分析</strong><br>
+由于本文提出的结构是学习一种输入和输出的关系，本文是通过FSP实现的，所以多个FSP之间可以相对独立一些，整个模块可以解耦；</p>
+<p>而对于FitNet，假设加入三个中间层，在第二个中间层和第三个中间层不好去学习，因为要想学习好他们，首先要保证前边的一层中间层学习好，所以FitNet这种直接用特征做监督信息的方式不能解耦多个loss层，这也是为什么三层FitNet没有一层FitNet效果好的原因；</p>
+<p>FSP相比FitNet，赋予了网络更大的自由。如果student与teacher网络有相同的中间层，那么肯定有相同的FSP，但反过来确不成立，FSP的相同并不限制中间层的具体状态。</p>
+<p><strong>关于加强多个Student的不相关性，从而提升集成模型的准确率</strong><br>
+Table1的倒数第二行：虽然student网络的单体能力已经超过了teacher网络，但是集成的student网络确没有集成的teacher的集成效果好，这是因为多个student网络的FSP矩阵是一致的，导致他们的相关性太大</p>
+<p>Table1的倒数第一行：作者提出了将生成的FSP矩阵的行和列进行重新洗牌，得到新的几个FSP，用新的FSP训练student得到的集成效果要好。其实这相当于将生成FSP的两个不同层的特征的通道打乱而得出的FSP，本质上没有改变信息的内容。</p>
+<p>就训练次数而言，原模型的迭代次数为16 s/100 iterations，而第1阶段的训练次数为35  s/100 iterations。因此，就总学习时间而言，用原方法训练3名教师dnn用8.6h，用本方法训练3名学生dnn用4.84h。后者是后者的1.78倍。</p>
+<p><img src="/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610152832207.png" alt></p>
+<h3 id="performance-improvement-for-the-small-dnn"><a class="markdownIt-Anchor" href="#performance-improvement-for-the-small-dnn"></a> Performance improvement for the small DNN</h3>
+<p><img src="/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610152929410.png" alt></p>
+<p><img src="/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610153004169.png" alt></p>
+<h3 id="transfer-learning"><a class="markdownIt-Anchor" href="#transfer-learning"></a> Transfer Learning</h3>
+<p><img src="/images/A%20Gift%20from%20Knowledge%20Distillation/image-20210610160243570.png" alt></p>
+<p>Teacher-fine tuning是在34层的网络上进行迁移学习得到的结果，Proposed Method是在20层的网络上进行FSP学习得到的结果，可以看出，已经很接近了。</p>
+<h2 id="conclusion"><a class="markdownIt-Anchor" href="#conclusion"></a> Conclusion</h2>
+<p>提出了一种从DNN中提取知识的新方法。通过将提取的知识确定为用所提出的FSP矩阵计算的求解过程的流程，该方法优于现有的知识迁移方法。我们从三个重要方面验证了所提方法的有效性。该方法优化DNN的速度更快，性能更高。此外，该方法还可用于迁移学习任务。</p>
+<p>打个比方：如果做一道平面几何题，题目要证两线段相等，做法是先要做一条辅助线，再证三角形 X 和 Y 全等，最后证明原题结论。那么前面 <strong>Romero 的方法就是，中间每一步都盯着你做，你必须和我做的一样，我教你这道题的辅助线该怎么连，然后证哪两个三角形全等；而本文的方法是说，你要先学会『辅助线-&gt;三角形全等-&gt;线段相等』这种做题的套路，而不是去学一个具体的题目里辅助线到底怎么连，我把一般的解题方法教给你，具体每一题每一步到底怎么证你自己琢磨琢磨就会了。<strong>最后训练的时候同样也是用</strong>二阶段法：先根据大模型的 FSP 矩阵调整小模型参数，使得小模型层间关系也和大模型的层间关系类似；然后直接用原损失函数（如交叉熵）继续精调小模型参数。<strong>感觉这种学习方法比较高屋建瓴，用人类学知识的过程来比喻的话，就是</strong>先学抽象的道，培养对于问题的宏观认识，培养整体观念，了解这个问题分为需要几大块，各个块之间的关系是什么样的；然后再学具体的术，填充完善知识细节。</strong></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://yao-chen-ecnu.github.io/2021/06/22/A%20Gift%20from%20Knowledge%20Distillation/" title="A gift from KD" target="_blank" rel="external">https://yao-chen-ecnu.github.io/2021/06/22/A%20Gift%20from%20Knowledge%20Distillation/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/Yao-chen-ecnu" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar1.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/Yao-chen-ecnu" target="_blank"><span class="text-dark">C Y</span><small class="ml-1x">Web Developer &amp; Designer</small></a></h3>
+        <div>记录生活点点滴滴</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/06/22/FITNETS/" title="FitNets"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/06/22/FedMD-Heterogenous%20Federated%20Learning/" title="FedMD"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>FedGKT | CY的博客</title>
+  <meta name="description" content="Abstract 重新定义联邦学习为群组知识迁移训练算法（ group knowledge transfer，FedGKT）。设计了一种交替最小化方法的变体，在边缘节点上训练小的神经网络，并通过知识蒸馏定期将它们的知识转移到大型服务器端的神经网络。 优点：减少边缘计算、降低CNNs通信带宽、异步训练、精度不减 结合FedAvg和SL（模型并行分割学习model parallelism-base">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FedGKT">
+<meta property="og:url" content="https://yao-chen-ecnu.github.io/2021/06/22/FedGKT/index.html">
+<meta property="og:site_name" content="CY">
+<meta property="og:description" content="Abstract 重新定义联邦学习为群组知识迁移训练算法（ group knowledge transfer，FedGKT）。设计了一种交替最小化方法的变体，在边缘节点上训练小的神经网络，并通过知识蒸馏定期将它们的知识转移到大型服务器端的神经网络。 优点：减少边缘计算、降低CNNs通信带宽、异步训练、精度不减 结合FedAvg和SL（模型并行分割学习model parallelism-base">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210601180626891.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/2021/06/22/FedGKT/Users/lenovo/AppData/Roaming/Typora/typora-user-images/image-20210603161858580.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603184900347.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603102952143.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603103153350.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603103359816.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603142505264.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603144757211.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603150251688.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603150346425.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603150802569.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603153926409.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603154200369.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603154225383.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603154304735.png">
+<meta property="article:published_time" content="2021-06-22T02:47:54.185Z">
+<meta property="article:modified_time" content="2021-06-22T03:07:53.641Z">
+<meta property="article:author" content="CY">
+<meta property="article:tag" content="联邦学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210601180626891.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://yao-chen-ecnu.github.io/2021/06/22/FedGKT/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="CY" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    <link href="//cdn.jsdelivr.net/npm/katex@0.9.0/dist/katex.min.css" rel="stylesheet">
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/Yao-chen-ecnu" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar1.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">C Y</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Web Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> ShangHai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/">区块链</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8/">工具使用</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">9</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Solidity/" rel="tag">Solidity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%85%AC%E5%BC%8F/" rel="tag">公式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">区块链+联邦学习</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%95%E5%B1%8F/" rel="tag">投屏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" rel="tag">知识蒸馏</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">联邦学习</a><span class="tag-list-count">4</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/Solidity/" style="font-size: 13px;">Solidity</a> <a href="/tags/%E5%85%AC%E5%BC%8F/" style="font-size: 13px;">公式</a> <a href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 14px;">区块链+联邦学习</a> <a href="/tags/%E6%8A%95%E5%B1%8F/" style="font-size: 13px;">投屏</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" style="font-size: 13.67px;">知识蒸馏</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13.33px;">算法</a> <a href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 13.67px;">联邦学习</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a><span class="archive-list-count">6</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/" class="title">Distilling the Knowledge in a Neural Network</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.194Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/DistilE/" class="title">DistillE</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.190Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/FedGKT/" class="title">FedGKT</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.185Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/FITNETS/" class="title">FitNets</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.180Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/A%20Gift%20from%20Knowledge%20Distillation/" class="title">A gift from KD</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.176Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-FedGKT" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      FedGKT
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/06/22/FedGKT/" class="article-date">
+	  <time datetime="2021-06-22T02:47:54.185Z" itemprop="datePublished">2021-06-22</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">联邦学习</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/06/22/FedGKT/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 4.6k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 19(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p><img src="/images/FedGKT/image-20210601180626891.png" alt></p>
+<h2 id="abstract"><a class="markdownIt-Anchor" href="#abstract"></a> Abstract</h2>
+<p>重新定义联邦学习为群组知识迁移训练算法（ group knowledge transfer，FedGKT）。设计了一种交替最小化方法的变体，在边缘节点上训练小的神经网络，并通过知识蒸馏定期将它们的知识转移到大型服务器端的神经网络。</p>
+<p>优点：减少边缘计算、降低CNNs通信带宽、异步训练、精度不减</p>
+<p>结合FedAvg和SL（模型并行分割学习model parallelism-based split learning），交替优化边缘模型和服务器模型。将计算负担从边缘设备转移到强大的服务器上。</p>
+<p>使用三个不同的数据集(CIFAR-10、CIFAR-100和CINIC-10)及其非独立同分布变体来训练基于ResNet-56和ResNet-110设计的CNN。结果表明FedGKT可以获得与FedAvg相当甚至略高的精度。与使用FedAvg的边缘训练相比，FedGKT对边缘设备的计算能力要求低9到17倍，对边缘CNN的参数要求低54到105倍。我们的源代码在FedML发布(<a target="_blank" rel="noopener" href="https://fedml.ai">https://fedml.ai</a>).</p>
+<p><img src="/2021/06/22/FedGKT/Users/lenovo/AppData/Roaming/Typora/typora-user-images/image-20210603161858580.png" alt="image-20210603161858580"></p>
+<h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+<p><img src="/images/FedGKT/image-20210603184900347.png" alt></p>
+<p>1、local training：边缘设备使用轻量级的CNN训练其私有数据，提取器extractor提取特征图，分类器classifier得到预测</p>
+<p>2、periodic transfer：服务器server，输入边缘设备模型提取到的特征，输出预测，匹配边缘设备的预测（使用软标签和KD）</p>
+<p>3、transfer back：服务器将预测回传给边缘设备，边缘设备再进行预测，匹配服务器的预测（使用软标签和KD）</p>
+<p>4、edge-sided model：服务器是由边缘设备传递的知识训练提升，而边缘设备同样因为服务器而提升，最终模型是本地特征提取器+共享服务器模型</p>
+<h2 id="group-knowledge-transfer"><a class="markdownIt-Anchor" href="#group-knowledge-transfer"></a> Group Knowledge Transfer</h2>
+<h3 id="preliminary"><a class="markdownIt-Anchor" href="#preliminary"></a> Preliminary</h3>
+<p>目标是在许多资源受限的设备上协同训练大型卷积神经网络(如ResNet)，这些设备没有配备GPU加速器，并且不需要将每个设备的数据集集中到服务器端。</p>
+<p>考虑在数据集上<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="script">D</mi></mrow><annotation encoding="application/x-tex">\mathcal{D}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord"><span class="mord mathcal" style="margin-right:0.02778em;">D</span></span></span></span></span>对<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="script">C</mi></mrow><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord"><span class="mord mathcal" style="margin-right:0.05834em;">C</span></span></span></span></span>个类进行监督学习，假设网络中有<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.07153em;">K</span></span></span></span>个客户端（边缘设备），第k个节点的私有数据集可以表示为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi mathvariant="script">D</mi><mi>k</mi></msup><mo>:</mo><mo>=</mo><msubsup><mrow><mo fence="true">{</mo><mrow><mo fence="true">(</mo><msubsup><mi mathvariant="bold-italic">X</mi><mi>i</mi><mi>k</mi></msubsup><mo separator="true">,</mo><msub><mi>y</mi><mi>i</mi></msub><mo fence="true">)</mo></mrow><mo fence="true">}</mo></mrow><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><msup><mi>N</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></msubsup></mrow><annotation encoding="application/x-tex">\mathcal{D}^{k}:=\left\{\left(\boldsymbol{X}_{i}^{k}, y_{i}\right)\right\}_{i=1}^{N^{(k)}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord mathcal" style="margin-right:0.02778em;">D</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">:</span></span><span class="base"><span class="strut" style="height:0.36687em;vertical-align:0em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.2793200000000002em;vertical-align:-0.69972em;"></span><span class="minner"><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size2">{</span></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size2">(</span></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.07778em;">X</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9251179999999999em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span style="top:-3.1390100000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size2">)</span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size2">}</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.5796000000000001em;"><span style="top:-2.00028em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.6029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9667142857142857em;"><span style="top:-2.966714285714285em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5357142857142856em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.69972em;"><span></span></span></span></span></span></span></span></span></span>，其中<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi mathvariant="bold-italic">X</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\boldsymbol{X}_{i}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83611em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.07778em;">X</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>为第i个训练样本，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">y_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>是对应的标签，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub><mo>∈</mo><mo stretchy="false">{</mo><mn>1</mn><mo separator="true">,</mo><mn>2</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>C</mi><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">y_{i} \in\{1,2, \ldots, C\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7335400000000001em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">{</span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.07153em;">C</span><span class="mclose">}</span></span></span></span>是个多分类任务。<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>N</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">N^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8879999999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8879999999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span>是<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi mathvariant="script">D</mi><mi>k</mi></msup></mrow><annotation encoding="application/x-tex">\mathcal{D}^{k}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord mathcal" style="margin-right:0.02778em;">D</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span></span></span></span></span>中的样本数量。<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="script">D</mi><mo>=</mo><mrow><mo fence="true">{</mo><msub><mi mathvariant="script">D</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi mathvariant="script">D</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi mathvariant="script">D</mi><mi>k</mi></msub><mo fence="true">}</mo></mrow><mo separator="true">,</mo><mi>N</mi><mo>=</mo><msubsup><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>K</mi></msubsup><msup><mi>N</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">\mathcal{D}=\left\{\mathcal{D}_{1}, \mathcal{D}_{2}, \ldots, \mathcal{D}_{k}\right\}, N=\sum_{k=1}^{K} N^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord"><span class="mord mathcal" style="margin-right:0.02778em;">D</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">{</span><span class="mord"><span class="mord"><span class="mord mathcal" style="margin-right:0.02778em;">D</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathcal" style="margin-right:0.02778em;">D</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathcal" style="margin-right:0.02778em;">D</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">}</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.2809409999999999em;vertical-align:-0.29971000000000003em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.981231em;"><span style="top:-2.40029em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.29971000000000003em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8879999999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p>一般来说，我们可以将基于CNN的联合学习表述为一个分布式优化问题:</p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 282: …}, y_{i}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(1)}
+">\min _{W} F(\boldsymbol{W}) \stackrel{\text { def }}{=} \min _{\boldsymbol{W}} \sum_{k=1}^{K} \frac{N^{(k)}}{N} \cdot f^{(k)}(\boldsymbol{W}), \text { where } f^{(k)}(\boldsymbol{W})=\frac{1}{N^{(k)}} \sum_{i=1}^{N^{(k)}} \ell\left(\boldsymbol{W} ; \boldsymbol{X}_{i}, y_{i}\right)\eqalignno{(1)}
+</p>
+<p>w代表global CNN在每个客户端的网络权重，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>f</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup><mo stretchy="false">(</mo><mi mathvariant="bold-italic">W</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f^{(k)}(\boldsymbol{W})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.138em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8879999999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.15972em;">W</span></span></span><span class="mclose">)</span></span></span></span>代表第k个客户端的本地目标函数，用于衡量异构数据集<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi mathvariant="script">D</mi><mi>k</mi></msup></mrow><annotation encoding="application/x-tex">\mathcal{D}^{k}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord mathcal" style="margin-right:0.02778em;">D</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span></span></span></span></span>上的本地经验风险。<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="normal">ℓ</mi></mrow><annotation encoding="application/x-tex">\ell</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord">ℓ</span></span></span></span>是loss function</p>
+<p>如图2(a)所示，主要缺点是由于缺乏GPU加速器和足够的内存，这些方法无法在资源受限的边缘设备上训练大型CNN。</p>
+<p><img src="/images/FedGKT/image-20210603102952143.png" alt></p>
+<p>如图2(b)所示，并行的分割学习模型，试图通过将W分割成两部分，并将更大的部分放到服务器端来打破计算约束，但是单个小批量迭代需要远程正向传播和反向传播。对于边缘计算，如此频繁的同步机制可能会导致严重的掉队问题，从而显著降低训练过程的速度。</p>
+<p><img src="/images/FedGKT/image-20210603103153350.png" alt></p>
+<h3 id="reformulation"><a class="markdownIt-Anchor" href="#reformulation"></a> Reformulation</h3>
+<p><strong>Non-convex Optimization.</strong></p>
+<p><img src="/images/FedGKT/image-20210603103359816.png" alt></p>
+<p>将<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">W</span></span></span></span>划分成两个部分：一个小的特征提取模型<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>W</mi><mi>e</mi></msub></mrow><annotation encoding="application/x-tex">W_e</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">e</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，一个大规模的服务器端模型<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>W</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">W_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，分别将他们放到边缘和服务器端。同时为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>W</mi><mi>e</mi></msub></mrow><annotation encoding="application/x-tex">W_e</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">e</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>添加一个分类器<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>W</mi><mi>c</mi></msub></mrow><annotation encoding="application/x-tex">W_c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，构成一个小的可训练的模型放在客户端。我们将单个全局模型优化重新表述为一个非凸优化问题，要求我们同时求解服务器模型<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>F</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">F_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>和边缘模型<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>F</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">F_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 301: …i}^{(k)}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(2)} 
+">\underset{\boldsymbol{W}_{s}}{\operatorname{argmin}} F_{s}\left(\boldsymbol{W}_{s}, \boldsymbol{W}_{e}^{*}\right)=\underset{\boldsymbol{W}_{s}}{\operatorname{argmin}} \sum_{k=1}^{K} \sum_{i=1}^{N^{(k)}} \ell_{s}\left(f_{s}\left(\boldsymbol{W}_{s} ; \boldsymbol{H}_{i}^{(k)}\right), y_{i}^{(k)}\right)\eqalignno{(2)} 
+</p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 123: …i}^{(k)}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(3)}
+">\text { subject to: } \boldsymbol{H}_{i}^{(k)}=f_{e}^{(k)}\left(\boldsymbol{W}_{e}^{(k)} ; \boldsymbol{X}_{i}^{(k)}\right)\eqalignno{(3)}
+</p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 418: …i}^{(k)}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(4)}
+">\underset{\left(W_{e}^{(k)}, \boldsymbol{W}_{c}^{(k)}\right)}{\operatorname{argmin}} F_{c}\left(\boldsymbol{W}_{e}^{(k)}, \boldsymbol{W}_{c}^{(k)}\right)=\underset{\left(\boldsymbol{W}_{e}^{(k)}, \boldsymbol{W}_{c}^{(k)}\right)}{\operatorname{argmin}} \sum_{i=1}^{N^{(k)}} \ell_{c}\left(f^{(k)}\left(\left(\boldsymbol{W}_{e}^{(k)}, \boldsymbol{W}_{c}^{(k)}\right) ; \boldsymbol{X}_{i}^{(k)}\right), y_{i}^{(k)}\right)\eqalignno{(4)}
+</p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 323: …i}^{(k)}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(5)} 
+">\left.=\underset{\left(\boldsymbol{W}_{e}^{(k)}, \boldsymbol{W}_{c}^{(k)}\right)}{\operatorname{argmin}} \sum_{i=1}^{N^{(k)}} \ell_{c}\left(f_{c}^{(k)}(\boldsymbol{W}_{c}^{(k)} ; \underbrace{f_{e}^{(k)}\left(\boldsymbol{W}_{e}^{(k)} ; \boldsymbol{X}_{i}^{(k)}\right.}_{\boldsymbol{H}_{i}^{(k)}})\right), y_{i}^{(k)}\right)\eqalignno{(5)} 
+</p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi mathvariant="normal">ℓ</mi><mi>c</mi></msub></mrow><annotation encoding="application/x-tex">\ell_{c}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord">ℓ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">c</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>和<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi mathvariant="normal">ℓ</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">\ell_{s}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord">ℓ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>分别是客户端和服务器端的损失函数，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>f</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">f_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>是服务器端模型，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>f</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">f^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0824399999999998em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8879999999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span>是客户端的边缘模型，包括一个特征提取器<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>f</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">f_{e}^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.23924em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">e</span></span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>和分类器<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>f</mi><mi>c</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">f_{c}^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.23924em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">c</span></span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>W</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">W_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>、<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>W</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">W_e^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.161392em;vertical-align:-0.11659199999999997em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">e</span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>、<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>W</mi><mi>c</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">W_c^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.161392em;vertical-align:-0.11659199999999997em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">c</span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>分别是<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>f</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">f_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>、<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>f</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">f_{e}^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.23924em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">e</span></span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>和<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>f</mi><mi>c</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">f_{c}^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.23924em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">c</span></span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>的网络权重。<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>H</mi><mi>i</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">H_i^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.321664em;vertical-align:-0.27686399999999994em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.4231360000000004em;margin-left:-0.08125em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.27686399999999994em;"><span></span></span></span></span></span></span></span></span></span>是第i个样本的特征提取器<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>f</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">f_{e}^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.23924em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">e</span></span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>feature map输出。客户端k在本地独立训练<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>f</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">f^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0824399999999998em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8879999999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span>，服务器端使用<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>H</mi><mi>i</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">H_i^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.321664em;vertical-align:-0.27686399999999994em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.4231360000000004em;margin-left:-0.08125em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.27686399999999994em;"><span></span></span></span></span></span></span></span></span></span>作为输入训练<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>f</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">f_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>。</p>
+<p>在推理阶段，客户端k的最终训练模型体系结构由特征提取器<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>f</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">f_{e}^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.23924em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">e</span></span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>的结构和服务器模型<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>f</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">f_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>的结构堆叠。实际上，客户端可以通过下载服务器模型<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>f</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">f_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>并在本地使用它来运行离线推理，也可以通过与服务器的网络连接执行在线推理。</p>
+<p>**Advantages and Challenges. **</p>
+<p>上述Reformulation的核心优势是，当我们假设<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>f</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">f^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0824399999999998em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8879999999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span>的模型规模比<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>f</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">f_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>的模型规模小多个数量级时，边缘训练是可以承受的。此外，对于大型CNN训练，将<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>H</mi><mi>i</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">H_i^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.321664em;vertical-align:-0.27686399999999994em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.4231360000000004em;margin-left:-0.08125em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.27686399999999994em;"><span></span></span></span></span></span></span></span></span></span>传输到服务器的通信带宽大大小于传统联邦学习中通信所有模型参数的带宽。</p>
+<p>挑战：</p>
+<p>首先，期望每个客户机充分解决内部优化问题（等式（5））。也就是说，每个客户机都应该很好地训练其特征提取器<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>f</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">f_{e}^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.23924em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">e</span></span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>，以确保等式（3）能够准确地为任何给定的输入图像生成<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>H</mi><mi>i</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">H_i^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.321664em;vertical-align:-0.27686399999999994em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.4231360000000004em;margin-left:-0.08125em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.27686399999999994em;"><span></span></span></span></span></span></span></span></span></span>。然而，在FL设置中，每个边缘设备上的数据集很小，因此可能不足以训练仅基于本地数据集的基于CNN的特征提取器。此外，外部优化公式（2）和内部优化公式（5）相互关联：公式（2）依赖于由公式（5）优化的<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>H</mi><mi>i</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">H_i^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.321664em;vertical-align:-0.27686399999999994em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.4231360000000004em;margin-left:-0.08125em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.27686399999999994em;"><span></span></span></span></span></span></span></span></span></span>的质量。如果单个客户端特征提取器<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>f</mi><mi>e</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">f_{e}^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.23924em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">e</span></span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>没有得到充分训练，则这种相关性进一步使得外部优化等式（2）难以收敛。</p>
+<h3 id="group-knowledge-transfer-fedgkt"><a class="markdownIt-Anchor" href="#group-knowledge-transfer-fedgkt"></a> Group Knowledge Transfer (FedGKT)</h3>
+<p>鉴于上述挑战，我们将知识蒸馏损失纳入优化方程以规避优化困难。</p>
+<p>直觉是，从服务器模型转移的知识可以促进边缘优化（等式（5））。因此，我们建议双向转移群体知识。服务器CNN从多个边缘吸收知识，单个边缘CNN从服务器CNN获得增强的知识。更具体地说，在式（2）和式（5）中，我们设计了如下损失函数：</p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 190: …l{p}_{s}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(6)} 
+">\ell_{s}=\ell_{C E}+\sum_{k=1}^{K} \ell_{K D}\left(\boldsymbol{z}_{s}, \boldsymbol{z}_{c}^{(k)}\right)=\ell_{C E}+\sum_{k=1}^{K} D_{K L}\left(\boldsymbol{p}_{k} \| \boldsymbol{p}_{s}\right)\eqalignno{(6)} 
+</p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 166: …l{p}_{k}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(7)} 
+">\ell_{c}^{(k)}=\ell_{C E}+\ell_{K D}\left(\boldsymbol{z}_{s}, \boldsymbol{z}_{c}^{(k)}\right)=\ell_{C E}+D_{K L}\left(\boldsymbol{p}_{s} \| \boldsymbol{p}_{k}\right)\eqalignno{(7)} 
+</p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi mathvariant="normal">ℓ</mi><mrow><mi>C</mi><mi>E</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\ell_{CE}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord">ℓ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">C</span><span class="mord mathdefault mtight" style="margin-right:0.05764em;">E</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>是预测值与真实标签的加插上损失。<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>D</mi><mrow><mi>K</mi><mi>L</mi></mrow></msub></mrow><annotation encoding="application/x-tex">D_{KL}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">K</span><span class="mord mathdefault mtight">L</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>是KL散度。</p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi mathvariant="bold-italic">p</mi><mi>k</mi><mi>i</mi></msubsup><mo>=</mo><mfrac><mrow><mi>exp</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msubsup><mi>z</mi><mi>c</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo separator="true">,</mo><mi>i</mi><mo stretchy="false">)</mo></mrow></msubsup><mi mathvariant="normal">/</mi><mi>T</mi><mo fence="true">)</mo></mrow></mrow><mrow><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>C</mi></msubsup><mi>exp</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msubsup><mi>z</mi><mi>c</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo separator="true">,</mo><mi>i</mi><mo stretchy="false">)</mo></mrow></msubsup><mi mathvariant="normal">/</mi><mi>T</mi><mo fence="true">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">\boldsymbol{p}_{k}^{i}=\frac{\exp \left(z_{c}^{(k, i)} / T\right)}{\sum_{i=1}^{C} \exp \left(z_{c}^{(k, i)} / T\right)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1077719999999998em;vertical-align:-0.2831079999999999em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-2.4168920000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2831079999999999em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.32001em;vertical-align:-1.0100099999999999em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.31em;"><span style="top:-2.3925em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mop op-symbol small-op mtight" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8852357142857143em;"><span style="top:-2.1785614285714283em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-2.8971428571428572em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">C</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.32143857142857146em;"><span></span></span></span></span></span></span><span class="mspace mtight" style="margin-right:0.19516666666666668em;"></span><span class="mop mtight">exp</span><span class="minner mtight"><span class="mopen sizing reset-size3 size6 mtight delimcenter" style="top:0.07500000000000001em;"><span class="delimsizing size1 mtight"><span class="mtight">(</span></span></span><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0590857142857142em;"><span style="top:-2.3769714285714283em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5357142857142856em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">c</span></span></span></span><span style="top:-3.059085714285714em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5357142857142856em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">i</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15874285714285716em;"><span></span></span></span></span></span></span><span class="mord mtight">/</span><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span><span class="mclose sizing reset-size3 size6 mtight delimcenter" style="top:0.07500000000000001em;"><span class="delimsizing size1 mtight"><span class="mtight">)</span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.6125em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight">exp</span><span class="minner mtight"><span class="mopen sizing reset-size3 size6 mtight delimcenter" style="top:0.07500000000000001em;"><span class="mtight">(</span></span><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9667142857142856em;"><span style="top:-2.2497142857142856em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5357142857142856em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">c</span></span></span></span><span style="top:-2.966714285714285em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5357142857142856em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">i</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286em;"><span></span></span></span></span></span></span><span class="mord mtight">/</span><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span><span class="mclose sizing reset-size3 size6 mtight delimcenter" style="top:0.07500000000000001em;"><span class="mtight">)</span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.0100099999999999em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span> ，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi mathvariant="bold-italic">p</mi><mi>s</mi><mi>i</mi></msubsup><mo>=</mo><mfrac><mrow><mi>exp</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msubsup><mi>z</mi><mi>s</mi><mi>i</mi></msubsup><mi mathvariant="normal">/</mi><mi>T</mi><mo fence="true">)</mo></mrow></mrow><mrow><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>C</mi></msubsup><mi>exp</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msubsup><mi>z</mi><mi>s</mi><mi>i</mi></msubsup><mi mathvariant="normal">/</mi><mi>T</mi><mo fence="true">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">\boldsymbol{p}_{s}^{i}=\frac{\exp \left(z_{s}^{i} / T\right)}{\sum_{i=1}^{C} \exp \left(z_{s}^{i} / T\right)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.071664em;vertical-align:-0.247em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.9646720000000002em;vertical-align:-0.654672em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.31em;"><span style="top:-2.570335em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mop op-symbol small-op mtight" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8852357142857143em;"><span style="top:-2.1785614285714283em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-2.8971428571428572em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">C</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.32143857142857146em;"><span></span></span></span></span></span></span><span class="mspace mtight" style="margin-right:0.19516666666666668em;"></span><span class="mop mtight">exp</span><span class="minner mtight"><span class="mopen mtight delimcenter" style="top:0em;"><span class="mtight">(</span></span><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7570857142857143em;"><span style="top:-2.214em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span style="top:-2.786em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286em;"><span></span></span></span></span></span></span><span class="mord mtight">/</span><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span><span class="mclose mtight delimcenter" style="top:0em;"><span class="mtight">)</span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.6125em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight">exp</span><span class="minner mtight"><span class="mopen sizing reset-size3 size6 mtight delimcenter" style="top:0.07500000000000001em;"><span class="mtight">(</span></span><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9020857142857143em;"><span style="top:-2.214em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span style="top:-2.931em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286em;"><span></span></span></span></span></span></span><span class="mord mtight">/</span><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span><span class="mclose sizing reset-size3 size6 mtight delimcenter" style="top:0.07500000000000001em;"><span class="mtight">)</span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.654672em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></p>
+<p>它们分别是边缘模型<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>f</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">f^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0824399999999998em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8879999999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span>和服务器模型<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>f</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">f_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>的概率预测。对logit<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>z</mi></mrow><annotation encoding="application/x-tex">z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.04398em;">z</span></span></span></span>计算softmax值。logit<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>z</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">z_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.04398em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>和<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>z</mi><mi>c</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">z_c^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.161392em;vertical-align:-0.11659199999999997em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0448em;"><span style="top:-2.5834080000000004em;margin-left:-0.04398em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">c</span></span></span><span style="top:-3.2198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.11659199999999997em;"><span></span></span></span></span></span></span></span></span></span>分别是服务器模型和客户机模型中最后一个全连接层的输出。<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">T</span></span></span></span>是softmax函数的蒸馏温度超参数。</p>
+<p>这样，服务器模型吸收了从每个边缘模型获得的知识。类似地，边缘模型试图使其预测更接近服务器模型的预测，从而吸收服务器模型知识以提高其特征提取能力。</p>
+<p><strong>Improved Alternating Minimization</strong></p>
+<p>在将式（6）和（7）带入我们的重新公式（式（2）和（5））之后，我们提出了一种交替最小化（AM）的变体来解决重新公式化的优化问题，如下所示：</p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 474: …l{z}_{s}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(8)} 
+">\underset{\boldsymbol{W}_{s}}{\operatorname{argmin}} F_{s}\left(\boldsymbol{W}_{s}, \boldsymbol{W}_{e}^{(k) *}\right)=\underset{\boldsymbol{W}_{s}}{\operatorname{argmin}} \sum_{k=1}^{K} \sum_{i=1}^{N^{(k)}} \ell_{C E}\left(f_{s}(\boldsymbol{W}_{s} ; \underbrace{f_{e}^{(k)}\left(\boldsymbol{W}_{e}^{(k) *} ; \boldsymbol{X}_{i}^{(k)}\right.}_{\boldsymbol{H}_{i}^{(k)}}), y_{i}^{(k)}\right)+\sum_{k=1}^{K} \ell_{K D}\left(\boldsymbol{z}_{c}^{(k) *}, \boldsymbol{z}_{s}\right)\eqalignno{(8)} 
+</p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 312: …i}^{(k)}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(9)} 
+">\text { where } \left.\boldsymbol{z}_{c}^{(k) *}=f_{c}^{(k)}(\boldsymbol{W}_{c}^{(k)} ; \underbrace{f_{e}^{(k)}\left(\boldsymbol{W}_{e}^{(k) *} ; \boldsymbol{X}_{i}^{(k)}\right.}_{\boldsymbol{H}_{i}^{(k)}})\right), \text { and } \boldsymbol{z}_{s}=f_{s}\left(\boldsymbol{W}_{s} ; \boldsymbol{H}_{i}^{(k)}\right)\eqalignno{(9)} 
+</p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 471: …c}^{(k)}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(10)} 
+">\left.\underset{\boldsymbol{W}^{(k)}}{\operatorname{argmin}} F_{c}\left(\boldsymbol{W}_{s}^{*}, \boldsymbol{W}^{(k)}\right)=\underset{\boldsymbol{W}^{(k)}}{\operatorname{argmin}} \sum_{i=1}^{N^{(k)}} \ell_{C E}\left(f_{c}^{(k)}(\boldsymbol{W}_{c}^{(k)} ; \underbrace{f_{e}^{(k)}\left(\boldsymbol{W}_{e}^{(k)} ; \boldsymbol{X}_{i}^{(k)}\right.}_{\boldsymbol{H}_{i}^{(k)}})\right), y_{i}^{(k)}\right)+\ell_{K D}\left(\boldsymbol{z}_{s}^{*}, \boldsymbol{z}_{c}^{(k)}\right)\eqalignno{(10)} 
+</p>
+<p class="katex-block katex-error" title="ParseError: KaTeX parse error: Undefined control sequence: \eqalignno at position 316: …i}^{(k)}\right)\̲e̲q̲a̲l̲i̲g̲n̲n̲o̲{(11)} 
+">\text { where } \left.\boldsymbol{z}_{c}^{(k)}=f_{c}^{(k)}(\boldsymbol{W}_{c}^{(k)} ; \underbrace{f_{e}^{(k)}\left(\boldsymbol{W}_{e}^{(k)} ; \boldsymbol{X}_{i}^{(k)}\right.}_{\boldsymbol{H}_{i}^{(k)}})\right), \text { and } \boldsymbol{z}_{s}^{*}=f_{s}\left(\boldsymbol{W}_{s}^{*} ; \boldsymbol{H}_{i}^{(k)}\right)\eqalignno{(11)} 
+</p>
+<p>在式（8）中，我们为几个epoch固定<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">W^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8879999999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8879999999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span>并优化（训练）<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>W</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">W_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，然后我们切换到（10）为几个epoch固定<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>W</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">W_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>并优化<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">W^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8879999999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8879999999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span>。这种优化在等式（8）和（10）之间的进行多轮，直到达到收敛状态。</p>
+<p><strong>Training Algorithm</strong></p>
+<p><img src="/images/FedGKT/image-20210603142505264.png" alt></p>
+<p>在每一轮训练中，客户机使用本地SGD训练多个epoch，然后将提取的feature map和logit信息发送给服务器。当服务器从每个客户机接收提取的feature map和logit信息，用于训练更大的服务器端CNN。然后服务器将其全局logit信息发送回每个客户机。这个过程在多个回合中迭代，在每一回合中，所有客户机的知识都被传递到服务器模型，反之亦然。为了评估FedGKT的有效性，我们设计了基于ResNet[1]的CNN架构，如图1（b）所示。</p>
+<p><img src="/images/FedGKT/image-20210603144757211.png" alt></p>
+<h2 id="experiments"><a class="markdownIt-Anchor" href="#experiments"></a> Experiments</h2>
+<h3 id="experimental-setup"><a class="markdownIt-Anchor" href="#experimental-setup"></a> Experimental Setup</h3>
+<h4 id="implementation"><a class="markdownIt-Anchor" href="#implementation"></a> Implementation</h4>
+<p>我们基于FedML开发了FedGKT训练框架，FedML是一个开源的联邦学习研究库，简化了新算法的开发，并将其部署在分布式计算环境中。我们的服务器节点有4个NVIDIA RTX 2080Ti GPU，有足够的GPU内存用于大型模型训练。我们使用几个基于CPU的节点作为客户机来训练小型CNN。</p>
+<h4 id="task-and-dataset"><a class="markdownIt-Anchor" href="#task-and-dataset"></a> Task and Dataset</h4>
+<p>我们的训练任务是在CIFAR-10、CIFAR-100和CINIC-10上进行图像分类。我们还通过将训练样本分成K个不平衡分区使得客户端的数据为非独立同分布。</p>
+<h4 id="baselines"><a class="markdownIt-Anchor" href="#baselines"></a> Baselines</h4>
+<p>我们将FedGKT与最新的FL方法FedAvg和集中训练方法进行了比较。基于分裂学习的方法用于比较通信成本。</p>
+<h4 id="model-architectures"><a class="markdownIt-Anchor" href="#model-architectures"></a> Model Architectures</h4>
+<p>评估了两种现代CNN架构：ResNet-56和ResNet-110。baseline FedAvg要求所有边缘节点使用这两个CNN进行训练。对于FedGKT，设计了基于这两个CNN的边缘和服务器端模型。在边缘，我们设计了一个称为ResNet-8的小型CNN结构，包含8个卷积层。服务器端模型体系结构是ResNet-55和ResNet-109，它们具有相同的输入维度，以匹配边缘特征提取器的输出。对于分割学习，我们使用ResNet-8中的提取器作为CNN的边缘部分，而CNN的服务器端部分也是ResNet-55和ResNet-109。</p>
+<h3 id="result-of-model-accuracy"><a class="markdownIt-Anchor" href="#result-of-model-accuracy"></a> Result of Model Accuracy</h3>
+<p><img src="/images/FedGKT/image-20210603150251688.png" alt></p>
+<p><img src="/images/FedGKT/image-20210603150346425.png" alt></p>
+<p>对于标准实验，我们在16个客户机和一个GPU服务器上运行所有数据集和模型。图3显示了在3个数据集的ResNet-56模型上训练时的测试精度曲线。它包括集中培训、FedAvg和FedGKT的结果。我们还将ResNet-56和ResNet-110的所有数值结果总结在表1中。在I.I.D.和非I.I.D.设置中，FedGKT获得了与FedAvg相当甚至更好的精度。</p>
+<h3 id="efficiency-evaluation"><a class="markdownIt-Anchor" href="#efficiency-evaluation"></a> Efficiency Evaluation</h3>
+<p><img src="/images/FedGKT/image-20210603150802569.png" alt></p>
+<p>为了比较训练的计算需求，我们使用先前的方法计算了在边缘执行的浮点运算的次数[70,71]。我们在CIFAR-100上的结果如图4所示。与FedAvg基线相比，我们的FedGKT（ResNet-8）边缘的计算成本是ResNet-56的1/9，是ResNet-110的17/1（内存成本比较可以通过模型参数数粗略比较：ResNet-8有11K个参数，它比ResNet-56少54倍，比ResNet-110少105倍。我们还测试了inteli7 cpu上每小批（批大小为64）的CPU运行时间（它比现有的边缘设备有更高的性能）。结果表明，ResNet-8只需要ResNet-110训练时间的3%（30ms  vs.950ms）。</p>
+<p>为了比较通信成本，我们使用SL（分割学习）作为基线，它还交换隐藏的特征映射，而不是整个模型。在不使用数据压缩技术的情况下，计算通信成本。结果如图5所示（X轴单位：GB）。FedGKT与服务器之间的特征映射交换比SL少。</p>
+<h3 id="不同条件下fedgkt的消融实验"><a class="markdownIt-Anchor" href="#不同条件下fedgkt的消融实验"></a> 不同条件下FedGKT的消融实验</h3>
+<h4 id="the-effectiveness-of-knowledge-transfer"><a class="markdownIt-Anchor" href="#the-effectiveness-of-knowledge-transfer"></a> The Effectiveness of Knowledge Transfer</h4>
+<p><img src="/images/FedGKT/image-20210603153926409.png" alt></p>
+<p>我们观察到，从服务器到边缘的传输总是有帮助的，而随着数据集变得越来越困难，双向传输（S&lt;–&gt;E）更加有效（CIFAR-100）。</p>
+<h4 id="asynchronous-training"><a class="markdownIt-Anchor" href="#asynchronous-training"></a> Asynchronous Training</h4>
+<p><img src="/images/FedGKT/image-20210603154200369.png" alt></p>
+<p>由于服务器不需要等待来自所有客户机的更新来开始训练，FedGKT自然支持异步训练。实验结果如表3所示。结果表明，异步训练对模型精度没有负面影响。这说明了我们的方法比SL的优势，在SL中，每个边都需要对每个小批量迭代进行多次同步。</p>
+<h4 id="fedgkt-with-different-edge-number"><a class="markdownIt-Anchor" href="#fedgkt-with-different-edge-number"></a> FedGKT with Different Edge Number</h4>
+<p><img src="/images/FedGKT/image-20210603154225383.png" alt></p>
+<p>为了了解FedGKT的可扩展性，我们评估了它在不同边缘节点下的性能。测试精度结果如表4所示。一般来说，增加更多的边缘节点不会对精度产生负面影响。</p>
+<h4 id="smaller-architectures"><a class="markdownIt-Anchor" href="#smaller-architectures"></a> Smaller Architectures</h4>
+<p><img src="/images/FedGKT/image-20210603154304735.png" alt></p>
+<p>我们使用更小的边缘模型测试了FedGKT的性能：CIFAR-10上的ResNet-4和ResNet-6。ResNet-4和ResNet-6分别使用一个和两个基本块组件（包括两个卷积层）。结果如表5所示。虽然将边缘模型尺寸减小到ResNet-8并没有降低精度，但当模型尺寸减小得更大时，它确实会降低整体精度。</p>
+<h2 id="discussion"><a class="markdownIt-Anchor" href="#discussion"></a> Discussion</h2>
+<p>方法的局限性</p>
+<ol>
+<li>隐私安全：但基于以前的差分隐私和多方计算，交换隐藏的特征图比交换模型或梯度更安全。在训练阶段隐藏映射交换。模型或梯度交换可能泄露隐私，缺乏分析</li>
+<li>通信成本：隐藏向量比权重或梯度小，每个数据点的隐藏向量可以独立传输，FedGKT比梯度或模型交换要求更小的带宽，通信代价取决于数据点的数量，在样本数量非常大，图像分辨率非常高的情况下，方法和分割学习总的来说都有很高的通信成本。</li>
+<li>标签缺陷：只能用于监督学习，缺乏足够的标签</li>
+<li>可伸缩性：在跨设备设置中，我们需要使用大量的智能手机协同训练模型(如客户端数量高达100万)。</li>
+</ol>
+<h2 id="conclusion"><a class="markdownIt-Anchor" href="#conclusion"></a> Conclusion</h2>
+<p>在这项工作中，为了解决资源受限的现实，我们将FL重新构造为一个群体知识转移（FedGKT）训练算法。FedGKT可以有效地训练边缘上的小CNN，并通过知识提取将其知识周期性地传递给大容量的服务器端CNN。</p>
+<p>FedGKT在一个框架中实现了几个优点：<strong>减少了对边缘计算的需求，降低了大型cnn的通信成本，以及异步训练，同时保持了与FL相当的模型精度</strong>。</p>
+<p>为了简化边缘训练，我们还开发了一个基于FedGKT的分布式训练系统。我们通过在三个不同的数据集（CIFAR-10、CIFAR-100和CINIC-10）及其非独立同分布变体上训练CNN架构（ResNet-56和ResNet-110）来评估FedGKT。我们的结果表明，FedGKT可以获得相当甚至略高的精度。<strong>与使用FedAvg的边缘训练相比，FedGKT的计算能力（FLOPs）降低了9到17倍，所需的参数也减少了54到105倍。</strong></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://yao-chen-ecnu.github.io/2021/06/22/FedGKT/" title="FedGKT" target="_blank" rel="external">https://yao-chen-ecnu.github.io/2021/06/22/FedGKT/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/Yao-chen-ecnu" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar1.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/Yao-chen-ecnu" target="_blank"><span class="text-dark">C Y</span><small class="ml-1x">Web Developer &amp; Designer</small></a></h3>
+        <div>记录生活点点滴滴</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/06/22/DistilE/" title="DistillE"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/06/22/FITNETS/" title="FitNets"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+
+</html>
