@@ -16,6 +16,27 @@
   </url>
   
   <url>
+    <loc>https://yao-chen-ecnu.github.io/2021/06/22/FITNETS/</loc>
+    
+    <lastmod>2021-06-23</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://yao-chen-ecnu.github.io/2021/06/22/DistilE/</loc>
+    
+    <lastmod>2021-06-23</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://yao-chen-ecnu.github.io/2021/05/13/Communication-Efficient%20On-Device%20Machine%20Learning/</loc>
+    
+    <lastmod>2021-06-23</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://yao-chen-ecnu.github.io/2021/06/22/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/</loc>
     
     <lastmod>2021-06-23</lastmod>
@@ -26,27 +47,6 @@
     <loc>https://yao-chen-ecnu.github.io/2021/06/22/FedMD-Heterogenous%20Federated%20Learning/</loc>
     
     <lastmod>2021-06-23</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://yao-chen-ecnu.github.io/2021/06/22/FITNETS/</loc>
-    
-    <lastmod>2021-06-22</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://yao-chen-ecnu.github.io/2021/06/22/DistilE/</loc>
-    
-    <lastmod>2021-06-22</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://yao-chen-ecnu.github.io/2021/05/13/Communication-Efficient%20On-Device%20Machine%20Learning/</loc>
-    
-    <lastmod>2021-06-22</lastmod>
     
   </url>
   
@@ -142,14 +142,14 @@
   </url>
   
   <url>
-    <loc>https://yao-chen-ecnu.github.io/repository/index.html</loc>
+    <loc>https://yao-chen-ecnu.github.io/tags/index.html</loc>
     
     <lastmod>2021-03-15</lastmod>
     
   </url>
   
   <url>
-    <loc>https://yao-chen-ecnu.github.io/tags/index.html</loc>
+    <loc>https://yao-chen-ecnu.github.io/repository/index.html</loc>
     
     <lastmod>2021-03-15</lastmod>
     
@@ -193,7 +193,14 @@
 
   
   <url>
-    <loc>https://yao-chen-ecnu.github.io/tags/%E5%85%AC%E5%BC%8F/</loc>
+    <loc>https://yao-chen-ecnu.github.io/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/</loc>
+    <lastmod>2021-06-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://yao-chen-ecnu.github.io/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/</loc>
     <lastmod>2021-06-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -207,7 +214,7 @@
   </url>
   
   <url>
-    <loc>https://yao-chen-ecnu.github.io/tags/Solidity/</loc>
+    <loc>https://yao-chen-ecnu.github.io/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/</loc>
     <lastmod>2021-06-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -221,21 +228,14 @@
   </url>
   
   <url>
-    <loc>https://yao-chen-ecnu.github.io/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/</loc>
+    <loc>https://yao-chen-ecnu.github.io/tags/%E5%85%AC%E5%BC%8F/</loc>
     <lastmod>2021-06-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://yao-chen-ecnu.github.io/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/</loc>
-    <lastmod>2021-06-23</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://yao-chen-ecnu.github.io/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/</loc>
+    <loc>https://yao-chen-ecnu.github.io/tags/Solidity/</loc>
     <lastmod>2021-06-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -244,14 +244,7 @@
 
   
   <url>
-    <loc>https://yao-chen-ecnu.github.io/categories/%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8/</loc>
-    <lastmod>2021-06-23</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://yao-chen-ecnu.github.io/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/</loc>
+    <loc>https://yao-chen-ecnu.github.io/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/</loc>
     <lastmod>2021-06-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -265,7 +258,14 @@
   </url>
   
   <url>
-    <loc>https://yao-chen-ecnu.github.io/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/</loc>
+    <loc>https://yao-chen-ecnu.github.io/categories/%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8/</loc>
+    <lastmod>2021-06-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://yao-chen-ecnu.github.io/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/</loc>
     <lastmod>2021-06-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
