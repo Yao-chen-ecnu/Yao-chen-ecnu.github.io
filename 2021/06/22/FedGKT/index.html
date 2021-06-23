@@ -26,7 +26,7 @@
 <meta property="og:description" content="Abstract 重新定义联邦学习为群组知识迁移训练算法（ group knowledge transfer，FedGKT）。设计了一种交替最小化方法的变体，在边缘节点上训练小的神经网络，并通过知识蒸馏定期将它们的知识转移到大型服务器端的神经网络。 优点：减少边缘计算、降低CNNs通信带宽、异步训练、精度不减 结合FedAvg和SL（模型并行分割学习model parallelism-base">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210601180626891.png">
-<meta property="og:image" content="https://yao-chen-ecnu.github.io/2021/06/22/FedGKT/Users/lenovo/AppData/Roaming/Typora/typora-user-images/image-20210603161858580.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603161858580.png">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603184900347.png">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603102952143.png">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603103153350.png">
@@ -41,7 +41,7 @@
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603154225383.png">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FedGKT/image-20210603154304735.png">
 <meta property="article:published_time" content="2021-06-22T02:47:54.185Z">
-<meta property="article:modified_time" content="2021-06-22T03:07:53.641Z">
+<meta property="article:modified_time" content="2021-06-23T01:38:38.608Z">
 <meta property="article:author" content="CY">
 <meta property="article:tag" content="联邦学习">
 <meta name="twitter:card" content="summary">
@@ -390,7 +390,7 @@
 <p>优点：减少边缘计算、降低CNNs通信带宽、异步训练、精度不减</p>
 <p>结合FedAvg和SL（模型并行分割学习model parallelism-based split learning），交替优化边缘模型和服务器模型。将计算负担从边缘设备转移到强大的服务器上。</p>
 <p>使用三个不同的数据集(CIFAR-10、CIFAR-100和CINIC-10)及其非独立同分布变体来训练基于ResNet-56和ResNet-110设计的CNN。结果表明FedGKT可以获得与FedAvg相当甚至略高的精度。与使用FedAvg的边缘训练相比，FedGKT对边缘设备的计算能力要求低9到17倍，对边缘CNN的参数要求低54到105倍。我们的源代码在FedML发布(<a target="_blank" rel="noopener" href="https://fedml.ai">https://fedml.ai</a>).</p>
-<p><img src="/2021/06/22/FedGKT/Users/lenovo/AppData/Roaming/Typora/typora-user-images/image-20210603161858580.png" alt="image-20210603161858580"></p>
+<p><img src="/images/FedGKT/image-20210603161858580.png" alt></p>
 <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p><img src="/images/FedGKT/image-20210603184900347.png" alt></p>
 <p>1、local training：边缘设备使用轻量级的CNN训练其私有数据，提取器extractor提取特征图，分类器classifier得到预测</p>

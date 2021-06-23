@@ -25,17 +25,17 @@
 <meta property="og:site_name" content="CY">
 <meta property="og:description" content="Abstract 提高机器学习算法表现的一个简单方法就是，训练不同模型然后对预测结果取平均。 但是要训练多个模型会带来过高的计算复杂度和部署难度。 可以将集成的知识压缩在单一的模型中。 论文使用这种方法在MNIST上做实验，发现取得了不错的效果。 论文还介绍了一种新型的集成，包括一个或多个完整模型和专用模型，能够学习区分完整模型容易混淆的细粒度的类别。  1 Introduction 昆虫有幼">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505100530230-1624330743279.png">
-<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210506200536063.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505100530230-1624411748331.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210506200536063-1624411804942.png">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505104750487.png">
-<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/v2-a120cc4bbb70b96968210b995b2e39d1_r.jpg">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/v2-a120cc4bbb70b96968210b995b2e39d1_r-1624411861809.jpg">
 <meta property="og:image" content="https://img-blog.csdnimg.cn/20210420154449334.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L25hdHVyZTU1Mzg2Mw==,size_16,color_FFFFFF,t_70">
 <meta property="article:published_time" content="2021-06-22T02:47:54.194Z">
-<meta property="article:modified_time" content="2021-06-22T03:01:09.907Z">
+<meta property="article:modified_time" content="2021-06-23T01:31:15.699Z">
 <meta property="article:author" content="CY">
 <meta property="article:tag" content="知识蒸馏">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505100530230-1624330743279.png">
+<meta name="twitter:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505100530230-1624411748331.png">
   <!-- Canonical links -->
   <link rel="canonical" href="https://yao-chen-ecnu.github.io/2021/06/22/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/index.html">
   
@@ -374,7 +374,7 @@
     </div>
     <div class="article-entry marked-body" itemprop="articleBody">
       
-        <p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505100530230-1624330743279.png" alt></p>
+        <p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505100530230-1624411748331.png" alt></p>
 <h2 id="abstract"><a class="markdownIt-Anchor" href="#abstract"></a> Abstract</h2>
 <p>提高机器学习算法表现的一个简单方法就是，训练不同模型然后对预测结果取平均。<br>
 但是要训练多个模型会带来过高的计算复杂度和部署难度。<br>
@@ -395,12 +395,12 @@
 <p>被用于训练小模型的转移训练集可以包括未打标签的数据（<strong>可以没有原始的实际标签，因为可以通过复杂模型获取一个软目标作为标签</strong>），或者使用原始的数据集，使用原始数据集可以得到更好的表现。</p>
 <h2 id="2-distillation"><a class="markdownIt-Anchor" href="#2-distillation"></a> 2 Distillation</h2>
 <p>原始softmax公式：</p>
-<p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210506200536063.png" alt></p>
+<p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210506200536063-1624411804942.png" alt></p>
 <p>但要是直接使用softmax层的输出值作为soft target, 这又会带来一个问题: 当softmax输出的概率分布熵相对较小时，负标签的值都很接近0，对损失函数的贡献非常小，小到可以忽略不计。因此**“温度”**这个变量就派上了用场。</p>
 <p>下面的公式时加了温度这个变量之后的softmax函数:</p>
 <p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505104750487.png" alt>T越大可以得到更&quot;软&quot;的概率分布。<br>
 （<strong>T越大，不同激活值的概率差异越小，所有激活值的概率趋于相同；T越小，不同激活值的概率差异越大</strong>)</p>
-<p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/v2-a120cc4bbb70b96968210b995b2e39d1_r.jpg" alt></p>
+<p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/v2-a120cc4bbb70b96968210b995b2e39d1_r-1624411861809.jpg" alt></p>
 <p>（<strong>在蒸馏训练的时候使用较大的T的原因是，较小的T对于那些远小于平均激活值的单元会给予更少的关注，而这些单元是有用的，使用较高的T能够捕捉这些信息</strong>）</p>
 <p><img src="https://img-blog.csdnimg.cn/20210420154449334.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L25hdHVyZTU1Mzg2Mw==,size_16,color_FFFFFF,t_70" alt="img"></p>
 <p>如上图所示，教师网络（左侧）的预测输出除以温度参数（Temperature）之后、再做softmax变换，可以获得软化的概率分布（软目标或软标签），数值介于0~1之间，取值分布较为缓和。</p>
