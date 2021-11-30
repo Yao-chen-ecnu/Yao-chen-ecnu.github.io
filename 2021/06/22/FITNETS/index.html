@@ -18,12 +18,12 @@
   
   
   <title>FitNets | CY的博客</title>
-  <meta name="description" content="Abstract 论文主要针对Hinton提出的知识蒸馏法进行扩展，允许Student网络可以比Teacher网络更深更窄，使用teacher网络的输出和中间层的特征作为提示，改进训练过程和student网络的性能。CIFAR10上的深的student网络参数比先进teacher网络的少10.4倍。  Introduction 所有之前的工作都是专注于压缩teacher网络到更浅更宽的网络，没">
+  <meta name="description" content="Abstract论文主要针对Hinton提出的知识蒸馏法进行扩展，允许Student网络可以比Teacher网络更深更窄，使用teacher网络的输出和中间层的特征作为提示，改进训练过程和student网络的性能。CIFAR10上的深的student网络参数比先进teacher网络的少10.4倍。 Introduction所有之前的工作都是专注于压缩teacher网络到更浅更宽的网络，没有充分利">
 <meta property="og:type" content="article">
 <meta property="og:title" content="FitNets">
 <meta property="og:url" content="https://yao-chen-ecnu.github.io/2021/06/22/FITNETS/index.html">
 <meta property="og:site_name" content="CY">
-<meta property="og:description" content="Abstract 论文主要针对Hinton提出的知识蒸馏法进行扩展，允许Student网络可以比Teacher网络更深更窄，使用teacher网络的输出和中间层的特征作为提示，改进训练过程和student网络的性能。CIFAR10上的深的student网络参数比先进teacher网络的少10.4倍。  Introduction 所有之前的工作都是专注于压缩teacher网络到更浅更宽的网络，没">
+<meta property="og:description" content="Abstract论文主要针对Hinton提出的知识蒸馏法进行扩展，允许Student网络可以比Teacher网络更深更窄，使用teacher网络的输出和中间层的特征作为提示，改进训练过程和student网络的性能。CIFAR10上的深的student网络参数比先进teacher网络的少10.4倍。 Introduction所有之前的工作都是专注于压缩teacher网络到更浅更宽的网络，没有充分利">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/FITNETS/image-20210608134637108.png">
 <meta property="og:image" content="https://img-blog.csdnimg.cn/2019122709444963.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2RoYWl1ZGE=,size_16,color_FFFFFF,t_70">
@@ -367,7 +367,7 @@
         <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/06/22/FITNETS/#comments" class="article-comment-link">评论</a></span>
         
 	
-		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 526(字)</span>
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 528(字)</span>
 	
 	
 		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 1(分)</span>
@@ -378,39 +378,30 @@
     <div class="article-entry marked-body" itemprop="articleBody">
       
         <p><img src="/images/FITNETS/image-20210608134637108.png" alt></p>
-<h2 id="abstract"><a class="markdownIt-Anchor" href="#abstract"></a> Abstract</h2>
-<p>论文主要针对Hinton提出的知识蒸馏法进行扩展，允许Student网络可以比Teacher网络更深更窄，使用teacher网络的输出和中间层的特征作为提示，改进训练过程和student网络的性能。CIFAR10上的深的student网络参数比先进teacher网络的少10.4倍。</p>
-<h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
-<p>所有之前的工作都是专注于压缩teacher网络到更浅更宽的网络，没有充分利用深度。深度是特征学习的基本层面，鼓励特征重用。</p>
+<h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>论文主要针对Hinton提出的知识蒸馏法进行扩展，允许Student网络可以比Teacher网络更深更窄，使用teacher网络的输出和中间层的特征作为提示，改进训练过程和student网络的性能。CIFAR10上的深的student网络参数比先进teacher网络的少10.4倍。</p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>所有之前的工作都是专注于压缩teacher网络到更浅更宽的网络，没有充分利用深度。深度是特征学习的基本层面，鼓励特征重用。</p>
 <p>论文通过利用深度解决网络压缩的问题，提出新方法训练thin and deep网络FitNets。 方法是对Hinton的知识蒸馏进行的扩展。</p>
-<h2 id="method"><a class="markdownIt-Anchor" href="#method"></a> Method</h2>
-<p>老师网络是一个wide网络，学生网络是thin and deep网络</p>
+<h2 id="Method"><a href="#Method" class="headerlink" title="Method"></a>Method</h2><p>老师网络是一个wide网络，学生网络是thin and deep网络</p>
 <p><img src="https://img-blog.csdnimg.cn/2019122709444963.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2RoYWl1ZGE=,size_16,color_FFFFFF,t_70" alt="img"></p>
 <p>具体步骤如下：</p>
 <ul>
-<li>
-<p>一、选择teacher模型特征提取器的第<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span></span></span></span>层输出作为<strong>hint</strong>，从第一层到第<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span></span></span></span>层的参数对应图(a)中的<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>W</mi><mrow><mi>H</mi><mi>i</mi><mi>n</mi><mi>t</mi></mrow></msub></mrow><annotation encoding="application/x-tex">W_{Hint}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.08125em;">H</span><span class="mord mathdefault mtight">i</span><span class="mord mathdefault mtight">n</span><span class="mord mathdefault mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></p>
+<li><p>一、选择teacher模型特征提取器的第$N$层输出作为<strong>hint</strong>，从第一层到第$N$层的参数对应图(a)中的$W_{Hint}$</p>
 </li>
-<li>
-<p>二、选择student模型特征提取器的第<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">M</span></span></span></span>层输出作为<strong>guided</strong>，从第一层到第<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">M</span></span></span></span>层的参数对应图(a)中的<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>W</mi><mrow><mi>G</mi><mi>u</mi><mi>i</mi><mi>d</mi><mi>e</mi><mi>d</mi></mrow></msub></mrow><annotation encoding="application/x-tex">W_{Guided}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">G</span><span class="mord mathdefault mtight">u</span><span class="mord mathdefault mtight">i</span><span class="mord mathdefault mtight">d</span><span class="mord mathdefault mtight">e</span><span class="mord mathdefault mtight">d</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></p>
+<li><p>二、选择student模型特征提取器的第$M$层输出作为<strong>guided</strong>，从第一层到第$M$层的参数对应图(a)中的$W_{Guided}$</p>
 </li>
-<li>
-<p>三、步骤一与步骤二的特征图维度可能不匹配，因此引入卷积层调整器，记为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>r</mi></mrow><annotation encoding="application/x-tex">r</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span></span></span></span>，对<strong>guided</strong>的维度进行调整</p>
+<li><p>三、步骤一与步骤二的特征图维度可能不匹配，因此引入卷积层调整器，记为$r$，对<strong>guided</strong>的维度进行调整</p>
 </li>
-<li>
-<p>四、进入阶段一训练，最小化如下损失函数：</p>
+<li><p>四、进入阶段一训练，最小化如下损失函数：</p>
 <p><img src="https://img-blog.csdnimg.cn/20191227153211928.png" alt="img"></p>
 </li>
 </ul>
-<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>u</mi><mi>h</mi></msub></mrow><annotation encoding="application/x-tex">u_h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>表示teacher模型从第一层到第<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span></span></span></span>层对应的函数，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>u</mi><mi>g</mi></msub></mrow><annotation encoding="application/x-tex">u_g</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">g</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span>表示student模型从第一层到第<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">M</span></span></span></span>层对应的函数，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>r</mi></mrow><annotation encoding="application/x-tex">r</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span></span></span></span>表示卷积层调整器，对应的参数记为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>W</mi><mi>r</mi></msub></mrow><annotation encoding="application/x-tex">W_r</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></p>
-<p>五、因为阶段一没有label信息，蒸馏粒度不够细，因此论文引入阶段二的训练，利用hinton提出的KD对student模型进行蒸馏，如图©，将小网络学习到的guided层参数作为初始权重，然后按照正常的蒸馏学习方法，跟大网络学习soft labels，损失函数如下：</p>
+<p>$u_h$表示teacher模型从第一层到第$N$层对应的函数，$u_g$表示student模型从第一层到第$M$层对应的函数，$r$表示卷积层调整器，对应的参数记为$W_r$</p>
+<p>五、因为阶段一没有label信息，蒸馏粒度不够细，因此论文引入阶段二的训练，利用hinton提出的KD对student模型进行蒸馏，如图(c)，将小网络学习到的guided层参数作为初始权重，然后按照正常的蒸馏学习方法，跟大网络学习soft labels，损失函数如下：</p>
 <p><img src="https://img-blog.csdnimg.cn/20190331211309889.png" alt="img"></p>
 <p><img src="https://img-blog.csdnimg.cn/20190331211340895.png" alt="img"></p>
 <p>整体训练过程如下图算法所示：</p>
 <p><img src="https://img-blog.csdnimg.cn/2019122715483691.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2RoYWl1ZGE=,size_16,color_FFFFFF,t_70" alt="img"></p>
-<h2 id="experiments"><a class="markdownIt-Anchor" href="#experiments"></a> Experiments</h2>
-<h3 id="在四个数据集上进行实验"><a class="markdownIt-Anchor" href="#在四个数据集上进行实验"></a> 在四个数据集上进行实验</h3>
-<p><img src="/images/FITNETS/image-20210608150721814.png" alt></p>
+<h2 id="Experiments"><a href="#Experiments" class="headerlink" title="Experiments"></a>Experiments</h2><h3 id="在四个数据集上进行实验"><a href="#在四个数据集上进行实验" class="headerlink" title="在四个数据集上进行实验"></a>在四个数据集上进行实验</h3><p><img src="/images/FITNETS/image-20210608150721814.png" alt></p>
 <p><img src="/images/FITNETS/image-20210608150845512.png" alt></p>
 <p>实验结果上，student比teacher参数少，效果比teacher还要好</p>
 

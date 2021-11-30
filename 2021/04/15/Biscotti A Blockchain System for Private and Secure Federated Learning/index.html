@@ -18,12 +18,12 @@
   
   
   <title>Biscotti A Blockchain System for Private and Secure Federated Learning | CY的博客</title>
-  <meta name="description" content="摘要 联合学习是支持安全多方机器学习(ML)的最新技术:数据保存在所有者的设备上，模型的更新通过安全协议进行聚合。然而，这个过程假设一个可信的集中式基础设施来进行协调，并且客户端必须相信中央服务不使用客户端数据的副产品。除此之外，一组恶意客户端还可能通过执行中毒攻击来损害模型的性能。作为回应，我们提出了Biscotti:一种完全分散的对等(P2P)多方消息传递方法，它使用区块链和加密原语来协调">
+  <meta name="description" content="摘要联合学习是支持安全多方机器学习(ML)的最新技术:数据保存在所有者的设备上，模型的更新通过安全协议进行聚合。然而，这个过程假设一个可信的集中式基础设施来进行协调，并且客户端必须相信中央服务不使用客户端数据的副产品。除此之外，一组恶意客户端还可能通过执行中毒攻击来损害模型的性能。作为回应，我们提出了Biscotti:一种完全分散的对等(P2P)多方消息传递方法，它使用区块链和加密原语来协调对等">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Biscotti A Blockchain System for Private and Secure Federated Learning">
 <meta property="og:url" content="https://yao-chen-ecnu.github.io/2021/04/15/Biscotti%20A%20Blockchain%20System%20for%20Private%20and%20Secure%20Federated%20Learning/index.html">
 <meta property="og:site_name" content="CY">
-<meta property="og:description" content="摘要 联合学习是支持安全多方机器学习(ML)的最新技术:数据保存在所有者的设备上，模型的更新通过安全协议进行聚合。然而，这个过程假设一个可信的集中式基础设施来进行协调，并且客户端必须相信中央服务不使用客户端数据的副产品。除此之外，一组恶意客户端还可能通过执行中毒攻击来损害模型的性能。作为回应，我们提出了Biscotti:一种完全分散的对等(P2P)多方消息传递方法，它使用区块链和加密原语来协调">
+<meta property="og:description" content="摘要联合学习是支持安全多方机器学习(ML)的最新技术:数据保存在所有者的设备上，模型的更新通过安全协议进行聚合。然而，这个过程假设一个可信的集中式基础设施来进行协调，并且客户端必须相信中央服务不使用客户端数据的副产品。除此之外，一组恶意客户端还可能通过执行中毒攻击来损害模型的性能。作为回应，我们提出了Biscotti:一种完全分散的对等(P2P)多方消息传递方法，它使用区块链和加密原语来协调对等">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/image-20210419152954709.png">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/image-20210412141853247.png">
@@ -374,10 +374,8 @@
     <div class="article-entry marked-body" itemprop="articleBody">
       
         <p><img src="/images/image-20210419152954709.png" alt></p>
-<h2 id="摘要"><a class="markdownIt-Anchor" href="#摘要"></a> 摘要</h2>
-<p>联合学习是支持安全多方机器学习(ML)的最新技术:数据保存在所有者的设备上，模型的更新通过安全协议进行聚合。然而，这个过程假设一个可信的集中式基础设施来进行协调，并且客户端必须相信中央服务不使用客户端数据的副产品。除此之外，一组恶意客户端还可能通过执行中毒攻击来损害模型的性能。作为回应，我们提出了Biscotti:一种完全分散的对等(P2P)多方消息传递方法，它使用区块链和加密原语来协调对等客户端之间的隐私保护消息传递过程。我们的评估表明，Biscotti是可扩展的、容错的，并且能够抵御已知的攻击。例如，当系统中存在30%的对手时，Biscotti能够保护单个客户端更新的隐私，并保持全局模型的大规模性能。</p>
-<h2 id="背景"><a class="markdownIt-Anchor" href="#背景"></a> 背景</h2>
-<p>机器学习应用中的一个常见需求是收集大量的训练数据。这些数据经常是分布式的，例如在医院或物联网部署中的设备之间。然而，当在多方环境中训练ML模型时，用户必须与集中式服务共享他们潜在的敏感信息。这种共享对于不愿意信任第三方的用户或公司来说是有问题的。例如，制药公司在药物发现方面相互竞争，很少共享数据。此外，互联网用户越来越意识到他们的数据的价值，并希望保持对其数据的控制。为了避免直接共享敏感数据，联合学习是大规模安全多方ML的一个突出解决方案:客户端通过可信的聚合器来训练共享模型，而不会暴露其底层数据或计算。</p>
+<h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>联合学习是支持安全多方机器学习(ML)的最新技术:数据保存在所有者的设备上，模型的更新通过安全协议进行聚合。然而，这个过程假设一个可信的集中式基础设施来进行协调，并且客户端必须相信中央服务不使用客户端数据的副产品。除此之外，一组恶意客户端还可能通过执行中毒攻击来损害模型的性能。作为回应，我们提出了Biscotti:一种完全分散的对等(P2P)多方消息传递方法，它使用区块链和加密原语来协调对等客户端之间的隐私保护消息传递过程。我们的评估表明，Biscotti是可扩展的、容错的，并且能够抵御已知的攻击。例如，当系统中存在30%的对手时，Biscotti能够保护单个客户端更新的隐私，并保持全局模型的大规模性能。</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>机器学习应用中的一个常见需求是收集大量的训练数据。这些数据经常是分布式的，例如在医院或物联网部署中的设备之间。然而，当在多方环境中训练ML模型时，用户必须与集中式服务共享他们潜在的敏感信息。这种共享对于不愿意信任第三方的用户或公司来说是有问题的。例如，制药公司在药物发现方面相互竞争，很少共享数据。此外，互联网用户越来越意识到他们的数据的价值，并希望保持对其数据的控制。为了避免直接共享敏感数据，联合学习是大规模安全多方ML的一个突出解决方案:客户端通过可信的聚合器来训练共享模型，而不会暴露其底层数据或计算。</p>
 <p><strong>攻击</strong>：</p>
 <ol>
 <li>毒化攻击</li>
@@ -389,35 +387,28 @@
 <p><strong>主要的贡献：</strong></p>
 <p>我们的主要贡献是将几种现有技术整合到一个连贯的系统中，在高度分布式P2P环境中提供安全和私有的多方机器学习。特别是，比肖蒂通过多克鲁姆防御防止对等体毒害模型[42]，通过不同的私人噪音提供隐私[22]，[23]，并使用沙米尔秘密进行安全聚合[43]。</p>
 <p>我们发现Biscotti可以在266.7分钟内在60000个图像数据集上训练一个有200个同伴的MNIST  softmax模型，同时可以抵抗高达30%的敌对同伴。此外，我们还证明了Biscotti的设计对于需要了解客户端SGD更新的信息泄漏攻击[13]是有弹性的，而且Biscotti对于之前工作中的中毒攻击[44]也是有弹性的。Biscotti还具有容错能力，可以应对每1.875秒就会发生故障的节点，并提供模型训练，即使节点发生故障也可以收敛。</p>
-<h2 id="挑战与关键技术"><a class="markdownIt-Anchor" href="#挑战与关键技术"></a> 挑战与关键技术</h2>
-<ol>
+<h2 id="挑战与关键技术"><a href="#挑战与关键技术" class="headerlink" title="挑战与关键技术"></a>挑战与关键技术</h2><ol>
 <li>女巫攻击：基于VRF和POF的一致性哈希</li>
 <li>毒化攻击：使用Multi-Krum进行验证更新</li>
 <li>信息窃取：差分隐私</li>
 <li>隐私性：安全聚合和密钥共享</li>
 </ol>
-<h2 id="一些假设"><a class="markdownIt-Anchor" href="#一些假设"></a> 一些假设</h2>
-<h3 id="设计假设"><a class="markdownIt-Anchor" href="#设计假设"></a> 设计假设</h3>
-<ol>
+<h2 id="一些假设"><a href="#一些假设" class="headerlink" title="一些假设"></a>一些假设</h2><h3 id="设计假设"><a href="#设计假设" class="headerlink" title="设计假设"></a>设计假设</h3><ol>
 <li>POF是基于POS的</li>
 <li>区块链拓扑</li>
 <li>机器学习：使用SGD</li>
 </ol>
-<h3 id="攻击假设"><a class="markdownIt-Anchor" href="#攻击假设"></a> 攻击假设</h3>
-<ol>
+<h3 id="攻击假设"><a href="#攻击假设" class="headerlink" title="攻击假设"></a>攻击假设</h3><ol>
 <li>在女巫攻击中，我们假设对手控制多个参与方，但不超过总体的30%</li>
 <li>将中毒攻击限制为错误标记数据，导致训练过的模型对其进行错误分类，不包括后门攻击和基于梯度上升的攻击</li>
 <li>当对手进行信息泄漏攻击时，我们假设他们的目标是学习受害者的本地数据集的属性。具体地说，我们提供了记录级别的隐私，这可以防止从用户数据集中对单个示例进行反匿名化。由于安全聚合的漏洞，我们不考虑带有边信息的信息泄漏攻击，也不考虑试图学习整个目标类属性的类级隐私攻击。</li>
 </ol>
-<h2 id="biscotti设计"><a class="markdownIt-Anchor" href="#biscotti设计"></a> BISCOTTI设计</h2>
-<h3 id="设计目标"><a class="markdownIt-Anchor" href="#设计目标"></a> 设计目标：</h3>
-<ol>
+<h2 id="BISCOTTI设计"><a href="#BISCOTTI设计" class="headerlink" title="BISCOTTI设计"></a>BISCOTTI设计</h2><h3 id="设计目标："><a href="#设计目标：" class="headerlink" title="设计目标："></a>设计目标：</h3><ol>
 <li>收敛到最优全局模型(在联邦学习设置中没有对手的情况下训练的同一模型);</li>
 <li>通过验证对等体模型更新来防止中毒;</li>
 <li>通过防止信息泄露攻击来保持对等体训练数据的私密性</li>
 </ol>
-<h3 id="总体设计"><a class="markdownIt-Anchor" href="#总体设计"></a> 总体设计：</h3>
-<p>每出一个块代表完成一次SGD迭代</p>
+<h3 id="总体设计："><a href="#总体设计：" class="headerlink" title="总体设计："></a>总体设计：</h3><p>每出一个块代表完成一次SGD迭代</p>
 <p><img src="/images/image-20210412141853247.png" alt></p>
 <p>1：每个peer在本地计算SGD更新值，即梯度</p>
 <p>2：每个peer从一个noising peers中获取噪声，这个noising peers是由VRF算法挑选出来的</p>
@@ -428,11 +419,9 @@
 <p>7：然后多份更新就会被发送到一个聚合委员会(aggregation committee)中进行聚合，聚会委员会会执行一个安全的协议去聚合unmaked update。</p>
 <p>完成聚合后所有对梯度有贡献的peers以及担任了验证和聚合委员会的都会受到额外的奖励。</p>
 <p>8：聚合后的updates添加到全局的模型中，并存储在一个新的区块中，同时将更新后的模型会广播给所有的peers，并且新产生的区块会被添加到账本上</p>
-<h2 id="训练初始化"><a class="markdownIt-Anchor" href="#训练初始化"></a> 训练初始化</h2>
-<ul>
+<h2 id="训练初始化"><a href="#训练初始化" class="headerlink" title="训练初始化"></a>训练初始化</h2><ul>
 <li>创世块由可信任的第三方创立</li>
-<li>包含以下信息，所有<code>peers</code>都可以获取到创世块中的信息：
-<ol>
+<li>包含以下信息，所有<code>peers</code>都可以获取到创世块中的信息：<ol>
 <li>初始模型状态w0和预计T的迭代次数</li>
 <li>用于创建SGD更新承诺的公钥PK(见附录C)</li>
 <li>系统中所有其他对等体的公钥,用于提交和验证签名验证期间</li>
@@ -442,13 +431,11 @@
 </ol>
 </li>
 </ul>
-<h2 id="区块链设计"><a class="markdownIt-Anchor" href="#区块链设计"></a> 区块链设计</h2>
-<p><img src="/images/image-20210412145250341.png" alt></p>
-<p>为了验证聚合是真实计算的，需要在块中包含单个更新。然而，单独存储它们会泄露个人私人训练数据[13]、[20]的信息。使用polynomial commitments</p>
+<h2 id="区块链设计"><a href="#区块链设计" class="headerlink" title="区块链设计"></a>区块链设计</h2><p><img src="/images/image-20210412145250341.png" alt></p>
+<p>为了验证聚合是真实计算的，需要在块中包含单个更新。然而，单独存储它们会泄露个人私人训练数据[13]、[20]的信息。使用polynomial commitments </p>
 <p>多项式承诺进行SGD更新，并将其映射到椭圆曲线上的一个点(详见附录C)。承诺通过隐藏个体更新来提供隐私，但是可以同态组合以验证aggregatorP㼿wiwas对全局模型的更新是诚实计算的。如果提交的更新列表等于总和，则以下等式成立:</p>
 <p><img src="/images/image-20210412145952331.png" alt></p>
-<h2 id="根据权益进行角色选举"><a class="markdownIt-Anchor" href="#根据权益进行角色选举"></a> 根据权益进行角色选举</h2>
-
+<h2 id="根据权益进行角色选举"><a href="#根据权益进行角色选举" class="headerlink" title="根据权益进行角色选举"></a>根据权益进行角色选举</h2>
       
     </div>
     <div class="article-footer">

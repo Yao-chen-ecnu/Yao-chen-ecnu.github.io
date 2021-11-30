@@ -18,12 +18,12 @@
   
   
   <title>Federated Distillation and Augmentation under Non-IID Private Data | CY的博客</title>
-  <meta name="description" content="Abstract 设备上的机器学习(ML)使训练过程能够利用大量用户生成的私有数据样本。为了享受这一好处，设备间的通信开销应该最小化。为此，我们提出了一种分布式模型训练算法——联合蒸馏(FD)，它的通信有效载荷比基准方案——联邦学习(FL)小得多，特别是当模型较大时。此外，不同设备的用户的数据样本很可能是No-IID，这通常会降低与IID数据集相比的性能。为了解决这个问题，我们提出了联合增强(">
+  <meta name="description" content="Abstract设备上的机器学习(ML)使训练过程能够利用大量用户生成的私有数据样本。为了享受这一好处，设备间的通信开销应该最小化。为此，我们提出了一种分布式模型训练算法——联合蒸馏(FD)，它的通信有效载荷比基准方案——联邦学习(FL)小得多，特别是当模型较大时。此外，不同设备的用户的数据样本很可能是No-IID，这通常会降低与IID数据集相比的性能。为了解决这个问题，我们提出了联合增强(FA">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Federated Distillation and Augmentation under Non-IID Private Data">
 <meta property="og:url" content="https://yao-chen-ecnu.github.io/2021/05/13/Communication-Efficient%20On-Device%20Machine%20Learning/index.html">
 <meta property="og:site_name" content="CY">
-<meta property="og:description" content="Abstract 设备上的机器学习(ML)使训练过程能够利用大量用户生成的私有数据样本。为了享受这一好处，设备间的通信开销应该最小化。为此，我们提出了一种分布式模型训练算法——联合蒸馏(FD)，它的通信有效载荷比基准方案——联邦学习(FL)小得多，特别是当模型较大时。此外，不同设备的用户的数据样本很可能是No-IID，这通常会降低与IID数据集相比的性能。为了解决这个问题，我们提出了联合增强(">
+<meta property="og:description" content="Abstract设备上的机器学习(ML)使训练过程能够利用大量用户生成的私有数据样本。为了享受这一好处，设备间的通信开销应该最小化。为此，我们提出了一种分布式模型训练算法——联合蒸馏(FD)，它的通信有效载荷比基准方案——联邦学习(FL)小得多，特别是当模型较大时。此外，不同设备的用户的数据样本很可能是No-IID，这通常会降低与IID数据集相比的性能。为了解决这个问题，我们提出了联合增强(FA">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Communication-Efficient%20On-Device%20Machine%20Learning/image-20210510125638543.png">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Communication-Efficient%20On-Device%20Machine%20Learning/image-20210511162725764.png">
@@ -377,13 +377,10 @@
     <div class="article-entry marked-body" itemprop="articleBody">
       
         <p><img src="/images/Communication-Efficient%20On-Device%20Machine%20Learning/image-20210510125638543.png" alt></p>
-<h2 id="abstract"><a class="markdownIt-Anchor" href="#abstract"></a> Abstract</h2>
-<p>设备上的机器学习(ML)使训练过程能够利用大量用户生成的私有数据样本。为了享受这一好处，设备间的<strong>通信开销应该最小化</strong>。为此，我们提出了一种分布式模型训练算法——<strong>联合蒸馏(FD)</strong>，它的通信有效载荷比基准方案——联邦学习(FL)小得多，特别是当模型较大时。此外，不同设备的用户的数据样本很可能是No-IID，这通常会降低与IID数据集相比的性能。为了解决这个问题，我们提出了<strong>联合增强(FAug)</strong>，其中每个设备共同训练一个生成模型，从而增强其本地数据从而获得IID数据集。实证研究表明，与FL相比，FD+FAug的通信开销减少了约26倍，同时测试精度达到95-98%。</p>
-<h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
-<p>在FL中，在每个设备端执行训练过程需要与模型size成比例的通信开销，从而无法使用很大的模型。此外，用户的训练数据集在不同设备之间可能是No-IID的。与IID数据相比，与IID数据集相比，No-IID 使得MNIST和CIFAR-10的预测精度分别降低了11%和51%。降低的准确性可以通过交换数据样本来部分恢复，但是这可能会导致过多的通信开销和隐私泄露。</p>
+<h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>设备上的机器学习(ML)使训练过程能够利用大量用户生成的私有数据样本。为了享受这一好处，设备间的<strong>通信开销应该最小化</strong>。为此，我们提出了一种分布式模型训练算法——<strong>联合蒸馏(FD)</strong>，它的通信有效载荷比基准方案——联邦学习(FL)小得多，特别是当模型较大时。此外，不同设备的用户的数据样本很可能是No-IID，这通常会降低与IID数据集相比的性能。为了解决这个问题，我们提出了<strong>联合增强(FAug)</strong>，其中每个设备共同训练一个生成模型，从而增强其本地数据从而获得IID数据集。实证研究表明，与FL相比，FD+FAug的通信开销减少了约26倍，同时测试精度达到95-98%。</p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>在FL中，在每个设备端执行训练过程需要与模型size成比例的通信开销，从而无法使用很大的模型。此外，用户的训练数据集在不同设备之间可能是No-IID的。与IID数据相比，与IID数据集相比，No-IID 使得MNIST和CIFAR-10的预测精度分别降低了11%和51%。降低的准确性可以通过交换数据样本来部分恢复，但是这可能会导致过多的通信开销和隐私泄露。</p>
 <p>因此，提出一种communication-efficient on-device ML approach under non-IID private data。为了提高通信效率，我们提出了一种分布式在线知识提取方法——联合提取（FD），其通信负载大小不依赖于模型大小，而是依赖于输出维度。在运行联邦蒸馏之前，我们通过联邦增强（FAug）来矫正No-IID训练数据集，这是一种使用GAN的数据增强方案，该网络是在隐私泄露和通信开销之间的权衡下集体训练的。经过训练的GAN使每个设备能够本地复制所有设备的数据样本，从而使训练数据集变的IID。</p>
-<h2 id="federated-distillation"><a class="markdownIt-Anchor" href="#federated-distillation"></a> Federated distillation</h2>
-<p>传统的分布式训练算法每个epoch都交换局部模型参数。在移动设备无线互连的设备上移动通信中，这导致了显著的通信开销。FL通过隔一段时间交换模型参数来降低通信成本[3–9]。在这种周期性通信的基础上，提出的FD不交换模型参数，而是交换模型输出，允许设备上的ML采用size较大的本地模型。</p>
+<h2 id="Federated-distillation"><a href="#Federated-distillation" class="headerlink" title="Federated distillation"></a>Federated distillation</h2><p>传统的分布式训练算法每个epoch都交换局部模型参数。在移动设备无线互连的设备上移动通信中，这导致了显著的通信开销。FL通过隔一段时间交换模型参数来降低通信成本[3–9]。在这种周期性通信的基础上，提出的FD不交换模型参数，而是交换模型输出，允许设备上的ML采用size较大的本地模型。</p>
 <p>FD的基本操作程序遵循知识蒸馏的在线版本[10]，也称为共蒸馏(CD)。在CD中，每个设备都把自己当成学生，把所有其他设备的平均模型输出视为老师的输出。每个模型输出是一组通过softmax函数归一化的logit值，称为logit向量，它的大小由标签的数量给出。使用交叉熵周期性地测量师生输出差异，该交叉熵成为学生的损失正则化因子，称为蒸馏正则化因子，从而在分布式训练过程中获得其他设备的知识。</p>
 <p>然而，CD远非通信高效。原因是每个logit向量都与其输入的训练数据样本相关联。因此，为了进行知识提炼，教师和学生的输出都应该使用相同的训练数据样本进行评估。这不允许周期性的模型输出交换。相反，它需要交换与训练数据集大小一样多的模型输出，或者模型参数，以便再现的教师模型可以与学生模型同步地本地生成输出。</p>
 <p>为了纠正这一点，<strong>FD中的每个设备存储每个标签的平均logit向量</strong>，并定期将这些局部平均logit向量上传到服务器。对于每个标签，来自所有设备的上传的局部平均logit向量被平均，得到每个标签的全局平均logit向量。所有标签的全局平均logit向量被下载到每个设备。然后，每个设备根据本地数据的标签，选择对应的教师模型的标签计算正则化项。</p>
@@ -391,23 +388,20 @@
 <p><img src="/images/Communication-Efficient%20On-Device%20Machine%20Learning/image-20210513105138683.png" alt></p>
 <p>集合S表示所有设备的整个训练数据集，B表示每个设备的批次。函数F(w，a)是由softmax函数归一化的logit向量，其中w和a是模型的权重和输入。函数φ(p，q)是p和q之间的交叉熵，用于损失函数和蒸馏正则化。项η是常数学习率，γ是蒸馏正则化的权重参数。</p>
 <p><strong>FD：生成模型，保存本地输出–&gt;将本地输出的平均（加权平均）和标签上传至服务器–&gt;聚合后下载全局平均和标签–&gt;正则化局部模型</strong></p>
-<h2 id="federated-augmentation"><a class="markdownIt-Anchor" href="#federated-augmentation"></a> Federated augmentation</h2>
-<p>我们提出FAug，其中每个设备可以使用生成模型生成本地生成缺失的数据样本。</p>
+<h2 id="Federated-augmentation"><a href="#Federated-augmentation" class="headerlink" title="Federated augmentation"></a>Federated augmentation</h2><p>我们提出FAug，其中每个设备可以使用生成模型生成本地生成缺失的数据样本。</p>
 <p>生成模型是在具有高计算能力和快速互联网连接的服务器上训练的。FAug中的每个设备识别数据样本中缺少的标签，称为目标标签，并通过无线链路将这些目标标签的少量种子数据样本上传到服务器。服务器对上传的种子数据样本进行过采样。最后，下载经过训练的GAN生成器使每个设备能够补充目标标签，直到训练数据集达到IID，这与直接数据样本交换相比显著降低了通信开销。这个过程如图1(b)所示</p>
 <p><img src="/images/Communication-Efficient%20On-Device%20Machine%20Learning/image-20210511184807035.png" alt></p>
 <p>FAug的运行需要保证用户生成数据的隐私性。事实上，每个设备的数据生成偏差，即目标标签，可以容易地揭示其隐私敏感信息，例如，揭示诊断结果的患者体检项目。为了保持这些目标标签相对于服务器的私密性，设备还从目标标签之外的标签上传冗余数据样本。因此，以额外的上行链路通信开销为代价，减少了从每个设备到服务器的隐私泄露，称为设备-服务器隐私泄露。</p>
 <p>在第I个设备上，它的设备-服务器PL被测量为<img src="/2021/05/13/Communication-Efficient%20On-Device%20Machine%20Learning/Users/lenovo/AppData/Roaming/Typora/typora-user-images/image-20210513151752980.png" alt="image-20210513151752980"></p>
 <p>只要设备的数量足够大，就可以实现最小泄漏，而不管目标和冗余标签的大小如何。</p>
-<h2 id="evaluation"><a class="markdownIt-Anchor" href="#evaluation"></a> Evaluation</h2>
-<p>在本节中，我们在No-IID MNIST训练数据集下评估FD+FAug，该数据集由以下程序构建。在具有55000个样本的MNIST训练数据集中，我们统一随机选择2000个样本，并将它们分配给每个设备。这2000个样本的集合根据标签分成10个子集。然后，在每个设备上，我们均匀地随机选择目标标签，并消除目标标签中大约97.5%的样本，使得每个目标标签包含5个样本。</p>
+<h2 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h2><p>在本节中，我们在No-IID MNIST训练数据集下评估FD+FAug，该数据集由以下程序构建。在具有55000个样本的MNIST训练数据集中，我们统一随机选择2000个样本，并将它们分配给每个设备。这2000个样本的集合根据标签分成10个子集。然后，在每个设备上，我们均匀地随机选择目标标签，并消除目标标签中大约97.5%的样本，使得每个目标标签包含5个样本。</p>
 <p>每个设备都有一个5层卷积神经网络(CNN)，由2个卷积层、1个最大池层和2个全连接层组成。该设备进行本地训练，批量设置为64。本地迭代250次进行交换，全局迭代16次。</p>
 <p><img src="/images/Communication-Efficient%20On-Device%20Machine%20Learning/image-20210511185431390.png" alt></p>
 <p><img src="/images/Communication-Efficient%20On-Device%20Machine%20Learning/image-20210511185532134.png" alt></p>
 <p>a说明了当“2”为目标标签时每个标签的测试准确性。对于目标标签，参考设备在原始非IID数据集下的独立训练产生了3.585%的测试精度，通过FAug结合FD或FL提高了73.44%或92.19%，验证了FAug结合FD和FL的有效性。</p>
 <p>b与独立训练相比，使用FL+FAug实现了大约2倍的测试精度</p>
 <p>c描述了设备-服务器PL随着冗余标签数量的增加而减少，随着目标标签数量的增加而增加。</p>
-<h2 id="concluding-remarks"><a class="markdownIt-Anchor" href="#concluding-remarks"></a> Concluding remarks</h2>
-<ul>
+<h2 id="Concluding-remarks"><a href="#Concluding-remarks" class="headerlink" title="Concluding remarks"></a>Concluding remarks</h2><ul>
 <li>实证研究表明，与FL相比，FD+FAug的有效性以小得多的通信开销实现了相对较高的准确性。</li>
 </ul>
 <p>在以后的工作中，只要稍加修改，FD的性能还可以进一步提高。</p>
