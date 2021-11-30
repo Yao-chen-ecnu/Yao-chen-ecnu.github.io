@@ -18,12 +18,12 @@
   
   
   <title>Distilling the Knowledge in a Neural Network | CY的博客</title>
-  <meta name="description" content="Abstract提高机器学习算法表现的一个简单方法就是，训练不同模型然后对预测结果取平均。但是要训练多个模型会带来过高的计算复杂度和部署难度。可以将集成的知识压缩在单一的模型中。论文使用这种方法在MNIST上做实验，发现取得了不错的效果。论文还介绍了一种新型的集成，包括一个或多个完整模型和专用模型，能够学习区分完整模型容易混淆的细粒度的类别。 1 Introduction昆虫有幼虫期和成虫期，幼">
+  <meta name="description" content="Abstract 提高机器学习算法表现的一个简单方法就是，训练不同模型然后对预测结果取平均。 但是要训练多个模型会带来过高的计算复杂度和部署难度。 可以将集成的知识压缩在单一的模型中。 论文使用这种方法在MNIST上做实验，发现取得了不错的效果。 论文还介绍了一种新型的集成，包括一个或多个完整模型和专用模型，能够学习区分完整模型容易混淆的细粒度的类别。  1 Introduction 昆虫有幼">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Distilling the Knowledge in a Neural Network">
 <meta property="og:url" content="https://yao-chen-ecnu.github.io/2021/06/22/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/index.html">
 <meta property="og:site_name" content="CY">
-<meta property="og:description" content="Abstract提高机器学习算法表现的一个简单方法就是，训练不同模型然后对预测结果取平均。但是要训练多个模型会带来过高的计算复杂度和部署难度。可以将集成的知识压缩在单一的模型中。论文使用这种方法在MNIST上做实验，发现取得了不错的效果。论文还介绍了一种新型的集成，包括一个或多个完整模型和专用模型，能够学习区分完整模型容易混淆的细粒度的类别。 1 Introduction昆虫有幼虫期和成虫期，幼">
+<meta property="og:description" content="Abstract 提高机器学习算法表现的一个简单方法就是，训练不同模型然后对预测结果取平均。 但是要训练多个模型会带来过高的计算复杂度和部署难度。 可以将集成的知识压缩在单一的模型中。 论文使用这种方法在MNIST上做实验，发现取得了不错的效果。 论文还介绍了一种新型的集成，包括一个或多个完整模型和专用模型，能够学习区分完整模型容易混淆的细粒度的类别。  1 Introduction 昆虫有幼">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505100530230-1624411748331.png">
 <meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210506200536063-1624411804942.png">
@@ -375,17 +375,31 @@
     <div class="article-entry marked-body" itemprop="articleBody">
       
         <p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505100530230-1624411748331.png" alt></p>
-<h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>提高机器学习算法表现的一个简单方法就是，训练不同模型然后对预测结果取平均。<br>但是要训练多个模型会带来过高的计算复杂度和部署难度。<br><strong>可以将集成的知识压缩在单一的模型中。</strong><br>论文使用这种方法在MNIST上做实验，发现取得了不错的效果。<br>论文还介绍了一种新型的集成，包括一个或多个完整模型和专用模型，能够学习区分完整模型容易混淆的细粒度的类别。</p>
-<h2 id="1-Introduction"><a href="#1-Introduction" class="headerlink" title="1 Introduction"></a>1 Introduction</h2><p>昆虫有幼虫期和成虫期，幼虫期主要行为是吸收养分，成虫期主要行为是生长繁殖。<br>类似地，大规模机器学习应用可以分为训练阶段和部署阶段，训练阶段不要求实时操作，允许训练一个复杂缓慢的模型，这个模型可以是分别训练多个模型的集成，也可以是单独的一个很大的带有强正则比如dropout的模型。<br>一旦模型训练好，可以用不同的训练，这里称为“蒸馏”，去把知识转移到更适合部署的小模型上。</p>
+<h2 id="abstract"><a class="markdownIt-Anchor" href="#abstract"></a> Abstract</h2>
+<p>提高机器学习算法表现的一个简单方法就是，训练不同模型然后对预测结果取平均。<br>
+但是要训练多个模型会带来过高的计算复杂度和部署难度。<br>
+<strong>可以将集成的知识压缩在单一的模型中。</strong><br>
+论文使用这种方法在MNIST上做实验，发现取得了不错的效果。<br>
+论文还介绍了一种新型的集成，包括一个或多个完整模型和专用模型，能够学习区分完整模型容易混淆的细粒度的类别。</p>
+<h2 id="1-introduction"><a class="markdownIt-Anchor" href="#1-introduction"></a> 1 Introduction</h2>
+<p>昆虫有幼虫期和成虫期，幼虫期主要行为是吸收养分，成虫期主要行为是生长繁殖。<br>
+类似地，大规模机器学习应用可以分为训练阶段和部署阶段，训练阶段不要求实时操作，允许训练一个复杂缓慢的模型，这个模型可以是分别训练多个模型的集成，也可以是单独的一个很大的带有强正则比如dropout的模型。<br>
+一旦模型训练好，可以用不同的训练，这里称为“蒸馏”，去把知识转移到更适合部署的小模型上。</p>
 <p>复杂模型学习区分大量的类，通常的训练目标是最大化正确答案的平均log概率，这么做有一个副作用就是训练模型同时也会给所有的错误答案分配概率，即使这个概率很小，而有一些概率会比其它的大很多。错误答案的相对概率体现了复杂模型的泛化能力。举个例子，宝马的图像被错认为垃圾箱的概率很低，但是这被个错认为垃圾桶的概率相比于被错认为胡萝卜的概率来说，是很大的。<strong>（可以认为模型不止学到了训练集中的宝马图像特征，还学到了一些别的特征，比如和垃圾桶共有的一些特征，这样就可能捕捉到在新的测试集上的宝马出现这些的特征，这就是泛化能力的体现）</strong></p>
-<p>将复杂模型转为小模型需要保留模型的泛化能力，一个方法就是用复杂模型产生的分类概率作为“软目标”来训练小模型。<br>当软目标的熵值较高时，相对于硬目标，每个训练样本提供更多的信息，训练样本之间会有更小的梯度方差。<br>所以小模型经常可以被训练在小数据集上，而且可以使用更高的学习率。</p>
-<p>像MNIST这种分类任务，复杂模型可以产生很好的表现，大部分信息分布在小概率的软目标中。<br>为了规避这个问题，Caruana和他的合作者们使用softmax输出前的units值，而不是softmax后的概率，最小化复杂模型和简单模型的units的平方误差来训练小模型。<br><strong>而更通用的方法，蒸馏法，先提高softmax的温度参数直到模型能产生合适的软目标。然后在训练小模型匹配软目标的时候使用相同的温度T。</strong></p>
+<p>将复杂模型转为小模型需要保留模型的泛化能力，一个方法就是用复杂模型产生的分类概率作为“软目标”来训练小模型。<br>
+当软目标的熵值较高时，相对于硬目标，每个训练样本提供更多的信息，训练样本之间会有更小的梯度方差。<br>
+所以小模型经常可以被训练在小数据集上，而且可以使用更高的学习率。</p>
+<p>像MNIST这种分类任务，复杂模型可以产生很好的表现，大部分信息分布在小概率的软目标中。<br>
+为了规避这个问题，Caruana和他的合作者们使用softmax输出前的units值，而不是softmax后的概率，最小化复杂模型和简单模型的units的平方误差来训练小模型。<br>
+<strong>而更通用的方法，蒸馏法，先提高softmax的温度参数直到模型能产生合适的软目标。然后在训练小模型匹配软目标的时候使用相同的温度T。</strong></p>
 <p>被用于训练小模型的转移训练集可以包括未打标签的数据（<strong>可以没有原始的实际标签，因为可以通过复杂模型获取一个软目标作为标签</strong>），或者使用原始的数据集，使用原始数据集可以得到更好的表现。</p>
-<h2 id="2-Distillation"><a href="#2-Distillation" class="headerlink" title="2 Distillation"></a>2 Distillation</h2><p>原始softmax公式：</p>
+<h2 id="2-distillation"><a class="markdownIt-Anchor" href="#2-distillation"></a> 2 Distillation</h2>
+<p>原始softmax公式：</p>
 <p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210506200536063-1624411804942.png" alt></p>
-<p>但要是直接使用softmax层的输出值作为soft target, 这又会带来一个问题: 当softmax输出的概率分布熵相对较小时，负标签的值都很接近0，对损失函数的贡献非常小，小到可以忽略不计。因此<strong>“温度”</strong>这个变量就派上了用场。</p>
-<p>下面的公式时加了温度这个变量之后的softmax函数: </p>
-<p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505104750487.png" alt>T越大可以得到更”软”的概率分布。<br>（<strong>T越大，不同激活值的概率差异越小，所有激活值的概率趋于相同；T越小，不同激活值的概率差异越大</strong>)</p>
+<p>但要是直接使用softmax层的输出值作为soft target, 这又会带来一个问题: 当softmax输出的概率分布熵相对较小时，负标签的值都很接近0，对损失函数的贡献非常小，小到可以忽略不计。因此**“温度”**这个变量就派上了用场。</p>
+<p>下面的公式时加了温度这个变量之后的softmax函数:</p>
+<p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/image-20210505104750487.png" alt>T越大可以得到更&quot;软&quot;的概率分布。<br>
+（<strong>T越大，不同激活值的概率差异越小，所有激活值的概率趋于相同；T越小，不同激活值的概率差异越大</strong>)</p>
 <p><img src="/images/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/v2-a120cc4bbb70b96968210b995b2e39d1_r-1624411861809.jpg" alt></p>
 <p>（<strong>在蒸馏训练的时候使用较大的T的原因是，较小的T对于那些远小于平均激活值的单元会给予更少的关注，而这些单元是有用的，使用较高的T能够捕捉这些信息</strong>）</p>
 <p><img src="https://img-blog.csdnimg.cn/20210420154449334.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L25hdHVyZTU1Mzg2Mw==,size_16,color_FFFFFF,t_70" alt="img"></p>
@@ -394,7 +408,7 @@
 <p>硬目标则是样本的真实标注，可以用one-hot矢量表示。</p>
 <p>total loss设计为软目标与硬目标所对应的交叉熵的加权平均（表示为KD loss与CE loss），其中软目标交叉熵的加权系数越大，表明迁移诱导越依赖教师网络的贡献，这对训练初期阶段是很有必要的，有助于让学生网络更轻松的鉴别简单样本，但训练后期需要适当减小软目标的比重，让真实标注帮助鉴别困难样本。</p>
 <p>另外，教师网络的推理性能通常要优于学生网络，而模型容量则无具体限制，且教师网络推理精度越高，越有利于学生网络的学习。</p>
-<h2 id="3-Preliminary-experiments-on-MNIST"><a href="#3-Preliminary-experiments-on-MNIST" class="headerlink" title="3 Preliminary experiments on MNIST"></a>3 Preliminary experiments on MNIST</h2><div class="table-container">
+<h2 id="3-preliminary-experiments-on-mnist"><a class="markdownIt-Anchor" href="#3-preliminary-experiments-on-mnist"></a> 3 Preliminary experiments on MNIST</h2>
 <table>
 <thead>
 <tr>
@@ -425,8 +439,6 @@
 </tr>
 </tbody>
 </table>
-</div>
-<div class="table-container">
 <table>
 <thead>
 <tr>
@@ -447,10 +459,9 @@
 </tr>
 </tbody>
 </table>
-</div>
 <p><strong>在MNIST这个数据集上，先使用大的网络进行训练，测试集错误67个，小网络训练，测试集错误146个。加入soft targets到目标函数中，相当于正则项，测试集的错误降低到了74个。这证明了teacher网络确实把知识转移到了student网络，使得结果变好了。</strong></p>
-<h2 id="4-Experiments-on-speech-recognition"><a href="#4-Experiments-on-speech-recognition" class="headerlink" title="4 Experiments on speech recognition"></a>4 Experiments on speech recognition</h2><p>研究了用于自动语音识别的深度神经网络(DNN)声学模型的集成效果。我们表明，我们在本文中提出的提取策略实现了将一组模型提取到单个模型中的预期效果，该模型比直接从相同训练数据中学习的相同大小的模型工作得更好。</p>
-<div class="table-container">
+<h2 id="4-experiments-on-speech-recognition"><a class="markdownIt-Anchor" href="#4-experiments-on-speech-recognition"></a> 4 Experiments on speech recognition</h2>
+<p>研究了用于自动语音识别的深度神经网络(DNN)声学模型的集成效果。我们表明，我们在本文中提出的提取策略实现了将一组模型提取到单个模型中的预期效果，该模型比直接从相同训练数据中学习的相同大小的模型工作得更好。</p>
 <table>
 <thead>
 <tr>
@@ -477,7 +488,6 @@
 </tr>
 </tbody>
 </table>
-</div>
 <p>其中basline的配置为</p>
 <ul>
 <li>8 层，每层2560个relu单元</li>
@@ -491,15 +501,22 @@
 <li>hard target 的目标函数给予0.5的相对权重</li>
 </ul>
 <p><strong>使用不同的参数训练了10个DNN，对这10个模型的预测结果求平均作为emsemble的结果，相比于单个模型有一定的提升。然后将这10个模型作为teacher网络，训练student网络。得到的Distilled Single model相比于直接的单个网络，也有一定的提升</strong></p>
-<h2 id="5-Training-ensembles-of-specialists-on-very-big-datasets"><a href="#5-Training-ensembles-of-specialists-on-very-big-datasets" class="headerlink" title="5 Training ensembles of specialists on very big datasets"></a>5 Training ensembles of specialists on very big datasets</h2><p>训练一个大的集成模型可以利用并行计算来训练，训练完成后把大模型蒸馏成小模型，但是另一个问题就是，训练本身就要花费大量的时间，这一节介绍的是如何学习专用模型集合，集合中的每个模型集中于不同的容易混淆的子类集合，这样可以减小计算需求。专用模型的主要问题是容易集中于区分细粒度特征而导致过拟合，可以使用软目标来防止过拟合。</p>
-<h3 id="5-1-JFT数据集"><a href="#5-1-JFT数据集" class="headerlink" title="5.1 JFT数据集"></a>5.1 JFT数据集</h3><p>JFT是一个谷歌的内部数据集，有1亿的图像，15000个标签。google用一个深度卷积神经网络，训练了将近6个月。<br>我们需要更快的方法来提升baseline模型。</p>
-<h3 id="5-2-专用模型"><a href="#5-2-专用模型" class="headerlink" title="5.2 专用模型"></a>5.2 专用模型</h3><p>将一个复杂模型分为两部分，一部分是一个用于训练所有数据的通用模型，另一部分是很多个专用模型，每个专用模型训练的数据集是一个容易混淆的子类集合。这些专用模型的softmax结合所有不关心的类为一类来使模型更小。</p>
+<h2 id="5-training-ensembles-of-specialists-on-very-big-datasets"><a class="markdownIt-Anchor" href="#5-training-ensembles-of-specialists-on-very-big-datasets"></a> 5 Training ensembles of specialists on very big datasets</h2>
+<p>训练一个大的集成模型可以利用并行计算来训练，训练完成后把大模型蒸馏成小模型，但是另一个问题就是，训练本身就要花费大量的时间，这一节介绍的是如何学习专用模型集合，集合中的每个模型集中于不同的容易混淆的子类集合，这样可以减小计算需求。专用模型的主要问题是容易集中于区分细粒度特征而导致过拟合，可以使用软目标来防止过拟合。</p>
+<h3 id="51-jft数据集"><a class="markdownIt-Anchor" href="#51-jft数据集"></a> 5.1 JFT数据集</h3>
+<p>JFT是一个谷歌的内部数据集，有1亿的图像，15000个标签。google用一个深度卷积神经网络，训练了将近6个月。<br>
+我们需要更快的方法来提升baseline模型。</p>
+<h3 id="52-专用模型"><a class="markdownIt-Anchor" href="#52-专用模型"></a> 5.2 专用模型</h3>
+<p>将一个复杂模型分为两部分，一部分是一个用于训练所有数据的通用模型，另一部分是很多个专用模型，每个专用模型训练的数据集是一个容易混淆的子类集合。这些专用模型的softmax结合所有不关心的类为一类来使模型更小。</p>
 <p>为了减少过拟合，共享学习到的低水平特征，每个专用模型用通用模型的权重进行初始化。另外，专用模型的训练样本一半来自专用子类集合，另一半从剩余训练集中随机抽取。</p>
-<h3 id="5-3-将子类分配到专用模型"><a href="#5-3-将子类分配到专用模型" class="headerlink" title="5.3 将子类分配到专用模型"></a>5.3 将子类分配到专用模型</h3><p>专用模型的子类分组集中于容易混淆的那些类别，虽然计算出了混淆矩阵来寻找聚类，但是可以使用一种更简单的办法，不需要使用真实标签来构建聚类。对通用模型的预测结果计算协方差，根据协方差把经常一起预测的类作为其中一个专用模型的要预测的类别。几个简单的例子如下。</p>
+<h3 id="53-将子类分配到专用模型"><a class="markdownIt-Anchor" href="#53-将子类分配到专用模型"></a> 5.3 将子类分配到专用模型</h3>
+<p>专用模型的子类分组集中于容易混淆的那些类别，虽然计算出了混淆矩阵来寻找聚类，但是可以使用一种更简单的办法，不需要使用真实标签来构建聚类。对通用模型的预测结果计算协方差，根据协方差把经常一起预测的类作为其中一个专用模型的要预测的类别。几个简单的例子如下。</p>
 <blockquote>
-<p>JFT 1: Tea party; Easter; Bridal shower; Baby shower; Easter Bunny; …<br>JFT 2: Bridge; Cable-stayed bridge; Suspension bridge; Viaduct; Chimney; …<br>JFT 3: Toyota Corolla E100; Opel Signum; Opel Astra; Mazda Familia; …</p>
+<p>JFT 1: Tea party; Easter; Bridal shower; Baby shower; Easter Bunny; …<br>
+JFT 2: Bridge; Cable-stayed bridge; Suspension bridge; Viaduct; Chimney; …<br>
+JFT 3: Toyota Corolla E100; Opel Signum; Opel Astra; Mazda Familia; …</p>
 </blockquote>
-<h3 id="5-4-实验表现"><a href="#5-4-实验表现" class="headerlink" title="5.4 实验表现"></a>5.4 实验表现</h3><div class="table-container">
+<h3 id="54-实验表现"><a class="markdownIt-Anchor" href="#54-实验表现"></a> 5.4 实验表现</h3>
 <table>
 <thead>
 <tr>
@@ -521,9 +538,8 @@
 </tr>
 </tbody>
 </table>
-</div>
-<h2 id="6-Soft-Targets-as-Regularizers"><a href="#6-Soft-Targets-as-Regularizers" class="headerlink" title="6 Soft Targets as Regularizers"></a>6 Soft Targets as Regularizers</h2><p>我们关于使用软目标而不是硬目标的主要主张之一是，许多有用的信息可以在软目标中携带，而这些信息不可能用单个硬目标编码。表5显示，只有3%的数据(约20M个例子)，用硬目标训练基线模型会导致严重的过度拟合(我提前停止了训练，因为精度在达到44.5%后急剧下降)，而用软目标训练的相同模型能够恢复完整训练集中的几乎所有信息(约2%)。更值得注意的是，我们不需要提前停止:具有软目标的系统简单地“收敛”到57%。这表明，软目标是一种非常有效的方式，可以将模型在所有数据上发现的规律传递给另一个模型。。</p>
-<div class="table-container">
+<h2 id="6-soft-targets-as-regularizers"><a class="markdownIt-Anchor" href="#6-soft-targets-as-regularizers"></a> 6 Soft Targets as Regularizers</h2>
+<p>我们关于使用软目标而不是硬目标的主要主张之一是，许多有用的信息可以在软目标中携带，而这些信息不可能用单个硬目标编码。表5显示，只有3%的数据(约20M个例子)，用硬目标训练基线模型会导致严重的过度拟合(我提前停止了训练，因为精度在达到44.5%后急剧下降)，而用软目标训练的相同模型能够恢复完整训练集中的几乎所有信息(约2%)。更值得注意的是，我们不需要提前停止:具有软目标的系统简单地“收敛”到57%。这表明，软目标是一种非常有效的方式，可以将模型在所有数据上发现的规律传递给另一个模型。。</p>
 <table>
 <thead>
 <tr>
@@ -550,8 +566,8 @@
 </tr>
 </tbody>
 </table>
-</div>
-<h2 id="简要总结"><a href="#简要总结" class="headerlink" title="简要总结"></a>简要总结</h2><p><strong>主要工作</strong></p>
+<h2 id="简要总结"><a class="markdownIt-Anchor" href="#简要总结"></a> 简要总结</h2>
+<p><strong>主要工作</strong></p>
 <ol>
 <li>“蒸馏”（<strong>distillation</strong>）：把大网络的知识压缩成小网络的一种方法</li>
 <li>“专用模型”（<strong>specialist models</strong>）：对于一个大网络，可以训练多个专用网络来提升大网络的模型表现</li>
