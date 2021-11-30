@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Data-Free Learning of Student Networks | CY的博客</title>
+  <meta name="description" content="本文是华为诺亚方舟实验室联合北京大学和悉尼大学在ICCV2019的工作  Abstract 作者从难以获取teacher网络原始训练集的角度出发，提出了一种将teacher网络用作固定的判决器，利用GAN（Generative Adversarial Networks）的生成器来产生模拟原始训练集的训练样本，进一步训练、获得具有较小尺寸和复杂度的student（portable）网络。 实验结果">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Data-Free Learning of Student Networks">
+<meta property="og:url" content="https://yao-chen-ecnu.github.io/2021/11/30/Data-Free%20Learning%20of%20Student%20Networks/index.html">
+<meta property="og:site_name" content="CY">
+<meta property="og:description" content="本文是华为诺亚方舟实验室联合北京大学和悉尼大学在ICCV2019的工作  Abstract 作者从难以获取teacher网络原始训练集的角度出发，提出了一种将teacher网络用作固定的判决器，利用GAN（Generative Adversarial Networks）的生成器来产生模拟原始训练集的训练样本，进一步训练、获得具有较小尺寸和复杂度的student（portable）网络。 实验结果">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210913212837984.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140345932-1638256123349.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130135092-1638256129258-1638256369525.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=H_%7Bcross%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=y_%7BS%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=y_%7BT%7D">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130251657-1638256134711.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130223986-1638256137666.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=N_%7BT%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=z%5E%7B1%7D+">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=z%5E%7B2%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=z%5E%7Bn%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=x%5E%7B1%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=x%5E%7B2%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=x%5E%7Bn%7D">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/v2-5c5c334c4732a947f6f8874f76411fcf_1440w.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=L_%7Bcross%7D">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130431438-1638256145142.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=H_%7Bcross%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=y_%7BT%7D%5E%7Bi%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=t%5E%7Bi%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=L_%7Ba%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=x%5E%7Bi%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=f_%7BT%7D%5E%7Bi%7D">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130453552-1638256147842.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=L_%7Binfo%7D">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130544830-1638256150835.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cfrac%7B1%7D%7Bk%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=y_%7BT%7D%5E%7B1%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=y_%7BT%7D%5E%7B2%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=y_%7BT%7D%5E%7Bn%7D">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/v2-617192e493e6c4988b01f89811097d5a_1440w.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130602654-1638256164649.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cfrac%7B1%7D%7Bk%7D">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/v2-dbaf627eaaf51e44d4c673ec3f148cbb_1440w.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Calpha">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbeta">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140136922-1638256170311.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=L_%7Btotal%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Calpha">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbeta">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140451590-1638256174181.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916151149624-1638256177127.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140523899-1638256179289.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140602002-1638256182768.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140622614-1638256185658.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210914115112902-1638256190786.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210914140506711-1638256193605.png">
+<meta property="article:published_time" content="2021-11-30T07:20:21.069Z">
+<meta property="article:modified_time" content="2021-11-30T07:25:18.441Z">
+<meta property="article:author" content="CY">
+<meta property="article:tag" content="无数据蒸馏">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yao-chen-ecnu.github.io/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210913212837984.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://yao-chen-ecnu.github.io/2021/11/30/Data-Free%20Learning%20of%20Student%20Networks/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="CY" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    <link href="//cdn.jsdelivr.net/npm/katex@0.9.0/dist/katex.min.css" rel="stylesheet">
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/Yao-chen-ecnu" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar1.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">C Y</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Web Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> ShangHai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/">区块链</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">9</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Solidity/" rel="tag">Solidity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">区块链+联邦学习</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E8%92%B8%E9%A6%8F/" rel="tag">无数据蒸馏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" rel="tag">知识蒸馏</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">联邦学习</a><span class="tag-list-count">4</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/Solidity/" style="font-size: 13px;">Solidity</a> <a href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 14px;">区块链+联邦学习</a> <a href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E8%92%B8%E9%A6%8F/" style="font-size: 13px;">无数据蒸馏</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" style="font-size: 14px;">知识蒸馏</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13px;">算法</a> <a href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 14px;">联邦学习</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Data-Free%20Learning%20of%20Student%20Networks/" class="title">Data-Free Learning of Student Networks</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T07:20:21.069Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/" class="title">Distilling the Knowledge in a Neural Network</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.194Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/DistilE/" class="title">DistillE</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.190Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/FedGKT/" class="title">FedGKT</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.185Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/06/22/FITNETS/" class="title">FitNets</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-22T02:47:54.180Z" itemprop="datePublished">2021-06-22</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-Data-Free Learning of Student Networks" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Data-Free Learning of Student Networks
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/11/30/Data-Free%20Learning%20of%20Student%20Networks/" class="article-date">
+	  <time datetime="2021-11-30T07:20:21.069Z" itemprop="datePublished">2021-11-30</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E8%92%B8%E9%A6%8F/" rel="tag">无数据蒸馏</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/11/30/Data-Free%20Learning%20of%20Student%20Networks/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 3k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 10(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210913212837984.png" alt></p>
+<p><strong>本文是华为诺亚方舟实验室联合北京大学和悉尼大学在ICCV2019的工作</strong></p>
+<h2 id="abstract"><a class="markdownIt-Anchor" href="#abstract"></a> Abstract</h2>
+<p>作者从难以获取teacher网络原始训练集的角度出发，提出了一种将teacher网络用作固定的判决器，利用GAN（Generative Adversarial Networks）的生成器来产生模拟原始训练集的训练样本，进一步训练、获得具有较小尺寸和复杂度的student（portable）网络。</p>
+<p>实验结果表明，作者所提出的DAFL（Data-Free Learning）方法在MNIST、CIFAR、CelebA等数据集上具有很好的性能，相对于KD（Knowledge Distillation）等方法具有更好的实用性。</p>
+<h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+<p>神经网络压缩算法目前根据有无原始数据的参与分为两种。</p>
+<p><strong>Data-Driven类</strong></p>
+<p>Hinton等提出了一种知识蒸馏方法（knowledge distillation，KD），该方法提炼出经过预训练的teacher网络的信息，以学习portable （student ）网络【Geoffrey Hinton， Oriol Vinyals， and Jeff Dean. Distillingthe knowledge in a neural network. arXiv preprintarXiv：1503.02531， 2015】。Denton等利用低秩分解（SVD）来处理全连接层的权重矩阵【Emily L Denton， Wojciech Zaremba， Joan Bruna， Yann Le- Cun， and Rob Fergus. Exploiting linear structure within convolutional networks for efficient evaluation. In NIPS， 2014】。Han等采用修剪、量化和霍夫曼编码来获得紧凑的深度CNN，使之具有较低的计算复杂度【Song Han， Huizi Mao， and William J Dally. Deep compression：Compressing deep neural networks with pruning， trained quantization and huffman coding. arXiv preprint arXiv：1510.00149， 2015】。Li等进一步提出了一种特征模拟框架，以训练有效的卷积网络进行目标检测【Quanquan Li， Shengying Jin， and Junjie Yan. Mimicking very efficient network for object detection. In CVPR， pages 7341-7349. IEEE， 2017】。</p>
+<p>上述方法在大多数据集上取得了良好的效果，但如果没有原始训练数据集，则很难应用。<br>
+<strong>Data- Free类</strong></p>
+<p>Lopes等利用原始训练数据集记录的 “元数据”（meta-data）（例如，每层激活的平均值和标准偏差），但大多数训练过的CNN很难提供此数据【Raphael Gontijo Lopes， Stefano Fenu， and Thad Starner.Data-free knowledge distillation for deep neural networks.arXiv preprint arXiv：1710.07535， 2017】。Srinivas和Babu提出在完全连接的层中直接合并相似的神经元来压缩网络，但这很难应用于未详细说明结构和参数信息的卷积层和网络【Suraj Srinivas and R Venkatesh Babu. Data-free parameter pruning for deep neural networks. arXiv preprint arXiv：1507.06149， 2015】。</p>
+<p>实际上，由于如涉及隐私、传输限制等因素，原始训练数据集和详细的网络结构、参数等很难获取，这就意味着上述两类方法难于应用。</p>
+<h2 id="data-free-student-network-learning"><a class="markdownIt-Anchor" href="#data-free-student-network-learning"></a> Data-free Student Network learning</h2>
+<h3 id="整体架构"><a class="markdownIt-Anchor" href="#整体架构"></a> 整体架构</h3>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140345932-1638256123349.png" alt></p>
+<p>GAN有一个生成器和一个判决器，给定的teacher网络同时作为GAN的判决器，不对其进行任何更新。Random Signals（随机信号）输入到GAN的生成器，变换为模拟的原始数据，由判决器进行识别。生成器生成一组数据后，再通过KD方法对student网络的参数进行更新。</p>
+<ul>
+<li><strong>Teacher-Student Interactions</strong></li>
+</ul>
+<p>由于很难获取原始训练数据集，有时也无法获得参数和详细结构信息。作者从teacher-student学习范例来着手。作者认为KD并未利用给定网络的参数和体系结构的信息，尽管可能仅提供有限的接口（如输入和输出接口），但仍然可以从teacher网络继承一些有用的信息。令NT和NS表示teacher网络和所需的portable/student网络，可用以下基于知识提炼的损失函数来优化student网络：</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130135092-1638256129258-1638256369525.png" alt></p>
+<p>其中， <img src="https://www.zhihu.com/equation?tex=H_%7Bcross%7D" alt="[公式]"> 表示交叉熵函数， <img src="https://www.zhihu.com/equation?tex=y_%7BS%7D" alt="[公式]"> 和 <img src="https://www.zhihu.com/equation?tex=y_%7BT%7D" alt="[公式]"> 分别表示学生网络和教师网络的输出，可以通过下式得到：</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130251657-1638256134711.png" alt></p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130223986-1638256137666.png" alt></p>
+<ul>
+<li><strong>GAN for Generating Training Samples（用GAN生成训练样本）</strong></li>
+</ul>
+<p>GAN由生成器G和判决器D组成，G用来生成数据，D用来识别真实图像与G生成的图像之间的差异。若获得最优的G，必须先得到一个最佳判决器D*，而判决器一般需要真实的图像进行训练。作者认为给定的深度神经网络已经在大规模数据集上得到了很好的训练，因此它也可以从图像中提取语义特征，因此不需额外的判决器，所以作者将教师网络视为固定的判别器。</p>
+<p>具体过程为：</p>
+<p>给定生成器G，教师网络 <img src="https://www.zhihu.com/equation?tex=N_%7BT%7D" alt="[公式]"> ，随机噪声{ <img src="https://www.zhihu.com/equation?tex=z%5E%7B1%7D+" alt="[公式]"> , <img src="https://www.zhihu.com/equation?tex=z%5E%7B2%7D" alt="[公式]"> ,… <img src="https://www.zhihu.com/equation?tex=z%5E%7Bn%7D" alt="[公式]"> }，生成器生成的图像{ <img src="https://www.zhihu.com/equation?tex=x%5E%7B1%7D" alt="[公式]"> , <img src="https://www.zhihu.com/equation?tex=x%5E%7B2%7D" alt="[公式]"> , <img src="https://www.zhihu.com/equation?tex=x%5E%7Bn%7D" alt="[公式]"> }，将这些生成图像送到教师网络中，得到输出结果，然后通过下式计算预测类别标签：</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/v2-5c5c334c4732a947f6f8874f76411fcf_1440w.png" alt></p>
+<p>定义三个子损失来得到最终的损失函数。</p>
+<ul>
+<li><strong>交叉熵损失 <img src="https://www.zhihu.com/equation?tex=L_%7Bcross%7D" alt="[公式]"></strong></li>
+</ul>
+<p>如果G生成的图像与教师网络的训练数据分布相同，那么它们的输出也应该与训练数据具有相似的输出。基于此，引入了one-hot loss，激励教师网络对生成器生成图像的输出接近one-hot向量，这样倒逼生成器生成与原始训练集相似的图片。</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130431438-1638256145142.png" alt></p>
+<p>其中， <img src="https://www.zhihu.com/equation?tex=H_%7Bcross%7D" alt="[公式]"> 是交叉熵函数， <img src="https://www.zhihu.com/equation?tex=y_%7BT%7D%5E%7Bi%7D" alt="[公式]"> 是教师网络预测输出， <img src="https://www.zhihu.com/equation?tex=t%5E%7Bi%7D" alt="[公式]"> 是真实标签。通过one-hot loss，我们期望生成的图像能够以较高的概率被教师网络划分为一个特定的类别。</p>
+<ul>
+<li><strong>特征激活损失 <img src="https://www.zhihu.com/equation?tex=L_%7Ba%7D" alt="[公式]"></strong></li>
+</ul>
+<p>除了教师网络的预测类标签外，卷积层提取的中间特征也是输入图像的重要特征，不同卷积层对应了不同的语义。由于教师网络中的卷积过滤器已经被训练来提取训练数据中的固有模式，因此如果输入的图像是真实的，而不是一些随机的向量，特征图往往会收到更高的激活值。因此，定义教师网络最后一层的提取特征 <img src="https://www.zhihu.com/equation?tex=x%5E%7Bi%7D" alt="[公式]"> 为 <img src="https://www.zhihu.com/equation?tex=f_%7BT%7D%5E%7Bi%7D" alt="[公式]"> ，定义一个激活损失函数</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130453552-1638256147842.png" alt></p>
+<p>其中，||<em>·</em> ||1是l1范数。加负号的原因是想让尽可能多的f被激活。</p>
+<ul>
+<li><strong>信息熵损失<img src="https://www.zhihu.com/equation?tex=L_%7Binfo%7D" alt="[公式]"></strong></li>
+</ul>
+<p>为了简化深度神经网络的训练过程，每一类训练实例的数量通常是平衡的，以MNIST为例，有60000图片，被分为10类，每一类6000张。通常，一个信源发送出什么符号是不确定的，衡量它可以根据其出现的概率来度量。概率大，出现机会多，不确定性小；反之不确定性就大。本文提出利用信息熵损失来衡量生成图像的类平衡性。</p>
+<p>具体来说，给定一个概率向量{p1,p2,…,pk}，信息熵会用来衡量信息的混乱程度。p的信息熵计算公式为：</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130544830-1638256150835.png" alt></p>
+<p>H（p）的值表示p携带的信息量，当所有的变量取值为 <img src="https://www.zhihu.com/equation?tex=%5Cfrac%7B1%7D%7Bk%7D" alt="[公式]"> 时，取得最大值。</p>
+<p>我们把信息熵的概念迁移到图像生成中来。给定一组教师网络的输出向量，{ <img src="https://www.zhihu.com/equation?tex=y_%7BT%7D%5E%7B1%7D" alt="[公式]"> , <img src="https://www.zhihu.com/equation?tex=y_%7BT%7D%5E%7B2%7D" alt="[公式]"> ,…, <img src="https://www.zhihu.com/equation?tex=y_%7BT%7D%5E%7Bn%7D" alt="[公式]"> }，对于每一类图像的生成概率我们可以表示为：</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/v2-617192e493e6c4988b01f89811097d5a_1440w.png" alt></p>
+<p>基于此，我们定义信息熵损失函数如下：</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916130602654-1638256164649.png" alt></p>
+<p>当损失取得最小值的时候，向量中的每一项都相等且等于 <img src="https://www.zhihu.com/equation?tex=%5Cfrac%7B1%7D%7Bk%7D" alt="[公式]"> ，这说明，生成器G可以以大致相同的概率生成每个类别的图像。因此，最小化生成图像的信息熵可以得到一组类别均衡的图像。</p>
+<ul>
+<li><strong>总损失函数</strong></li>
+</ul>
+<p>基于上述三个子损失函数，我们可以得到最终的损失函数**：**</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/v2-dbaf627eaaf51e44d4c673ec3f148cbb_1440w.png" alt></p>
+<p>其中， <img src="https://www.zhihu.com/equation?tex=%5Calpha" alt="[公式]"> 和 <img src="https://www.zhihu.com/equation?tex=%5Cbeta" alt="[公式]"> 是平衡三个任务的超参数，通过最小化上述函数，最优生成器G可以生成与之前用于训练教师网络的训练数据分布相似的图像。本文提出的方法可以直接模拟训练数据的分布，更灵活、高效地生成新图像。</p>
+<h2 id="optimization"><a class="markdownIt-Anchor" href="#optimization"></a> Optimization</h2>
+<p>如下图所示，DAFL算法可以分为两个步骤。</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140136922-1638256170311.png" alt></p>
+<p>首先，将一个预训练好的固定教师网络充当生成对抗网络中的判别器，利用上文中的总损失函数 <img src="https://www.zhihu.com/equation?tex=L_%7Btotal%7D" alt="[公式]"> ，优化了一个生成器G来生成与原始训练图像分布相似的教师网络图像；其次，利用知识蒸馏的方法直接将知识从教师网络转移到学生网络。</p>
+<h2 id="experiments"><a class="markdownIt-Anchor" href="#experiments"></a> Experiments</h2>
+<ul>
+<li><strong>Experiments on MNIST</strong></li>
+</ul>
+<p>首先在MNIST数据集上进行实验，MNIST数据集由10个类别(从0到9)的28×28像素图像组成，整个数据集包括6万张训练图像和1万张测试图像。为了选择超参数，从训练图像中选取10,000张图像作为验证集。然后，在全部60,000张图像上训练模型，以获得最终的网络。为了便于比较，设置了两种结构，一种是基于卷积（<strong>用LeNet-5作为教师网络，用比教师网络参通道数少一半的LeNet-5-HALF作为学生网络</strong>），另一种是基于全连接层（<strong>教师网络是有两个隐层，每个隐层1200个节点的HiltonNet，学生网络是有两个隐层，每个隐层800节点的HiltonNet</strong>）。我们发现，学生网络的参数量明显少于教师网络。在实验中，设置损失函数中的超参数 <img src="https://www.zhihu.com/equation?tex=%5Calpha" alt="[公式]"> =0.1， <img src="https://www.zhihu.com/equation?tex=%5Cbeta" alt="[公式]"> =5，训练200轮。</p>
+<p>实验结果如下图所示，在没有原始数据的情况下，DAFL的学生网络分别取得了98.2%和97.91%的正确率，这些数据与利用原始数据训练的教师网络性能相近，但是极大简化了结构和参数量，证明了DAFL的有效性。</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140451590-1638256174181.png" alt></p>
+<p><strong>消融实验</strong></p>
+<p>用随机生成的样本，student网络的准确度只有88.01%。仅用one-hot损失或特征图激活损失，所产生的样本不均衡，会导致较差。将Loh或La与Lie结合时，student网络分别为97.25%和95.53%。一起使用时，可达到最佳性能。</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916151149624-1638256177127.png" alt></p>
+<ul>
+<li><strong>Experiments on CIFAR</strong></li>
+</ul>
+<p><strong>在CIFAR上同样有很好的性能表现。</strong></p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140523899-1638256179289.png" alt></p>
+<ul>
+<li><strong>结果可视化</strong></li>
+</ul>
+<p><strong>（1）生成图可视化对比</strong></p>
+<p>在研究了DAFL方法的有效性之后，进一步对MNIST数据集进行了可视化实验。如下图所示，（a）图是MNIST数据集上的图像，（b）是生成器生成图像。通过损失函数深度挖掘教师网络的信息，生成了与训练图像较为相似的图像，这表明生成器能够以某种方式学习数据分布。</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140602002-1638256182768.png" alt></p>
+<p>（2）卷积核可视化</p>
+<p>如下图所示，可视化了LeNet-5教师网络和学生网络的过滤器。虽然学生网络是在没有真实数据的情况下训练的，但是通过所提出的方法学习的学生网络的卷积核仍然与教师网络的卷积核相似。可视化实验进一步证明，该生成器可以生成与原始图像模式相似的图像，并且利用生成的样本，学生网络可以从教师网络获取有价值的知识。</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210916140622614-1638256185658.png" alt></p>
+<h2 id="结论"><a class="markdownIt-Anchor" href="#结论"></a> 结论</h2>
+<p>传统的方法需要原始的训练数据集来微调压缩后的深度神经网络，使其具有可接受的精度。然而，由于一些隐私和传输限制，给定深度网络的训练集和详细的体系结构信息通常是不可用的。在本文中，我们提出了一个新的框架来训练一个生成器来逼近原始数据集而不需要训练数据。然后通过知识蒸馏方案有效地学习可移植网络。在分类数据集上的实验表明，该方法能够在不需要任何训练数据的情况下学习可移植的深度神经网络并取得很好的性能。</p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210914115112902-1638256190786.png" alt></p>
+<p><img src="/images/Data-Free%20Learning%20of%20Student%20Networks/image-20210914140506711-1638256193605.png" alt></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://yao-chen-ecnu.github.io/2021/11/30/Data-Free%20Learning%20of%20Student%20Networks/" title="Data-Free Learning of Student Networks" target="_blank" rel="external">https://yao-chen-ecnu.github.io/2021/11/30/Data-Free%20Learning%20of%20Student%20Networks/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/Yao-chen-ecnu" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar1.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/Yao-chen-ecnu" target="_blank"><span class="text-dark">C Y</span><small class="ml-1x">Web Developer &amp; Designer</small></a></h3>
+        <div>记录生活点点滴滴</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    
+    <li class="next">
+      <a href="/2021/06/22/Distilling%20the%20Knowledge%20in%20a%20Neural%20Network/" title="Distilling the Knowledge in a Neural Network"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+
+</html>
