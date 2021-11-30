@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Large-Scale Generative Data-Free Distillation | CY的博客</title>
+  <meta name="description" content="介绍 谷歌提出的这个适合大数据集的无需训练数据的网络压缩技术基于上次介绍的 DAFL，解决的主要问题是 DAFL 无法在大数据集上使用的问题。 知识蒸馏方法是解决无标注模型压缩问题的一种重要的手段。但是它的假设是在蒸馏阶段训练数据集是可得到的。但是实际情况是：在现实中的应用上，由于隐私因素的制约或者传输条件的限制，我们无法获得训练数据。比如：在医学图像场景中，用户不想让自己的照片 (数据) 被">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Large-Scale Generative Data-Free Distillation">
+<meta property="og:url" content="https://yao-chen-ecnu.github.io/2021/11/30/Large-Scale%20Generative%20Data-Free%20Distillation/index.html">
+<meta property="og:site_name" content="CY">
+<meta property="og:description" content="介绍 谷歌提出的这个适合大数据集的无需训练数据的网络压缩技术基于上次介绍的 DAFL，解决的主要问题是 DAFL 无法在大数据集上使用的问题。 知识蒸馏方法是解决无标注模型压缩问题的一种重要的手段。但是它的假设是在蒸馏阶段训练数据集是可得到的。但是实际情况是：在现实中的应用上，由于隐私因素的制约或者传输条件的限制，我们无法获得训练数据。比如：在医学图像场景中，用户不想让自己的照片 (数据) 被">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Large-Scale%20Generative%20Data-Free%20Distillation/image-20211108143737568.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-a3b4dc4670b41b711fd23960ef2a9ed5_1440w.jpg">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=T%28%5Cbm%7Bx%7D%3B+%5Ctheta_t%29">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=S%28%5Cbm%7Bx%7D%3B+%5Ctheta_s%29">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D++++++%5Cmathcal%7BL%7D_%5Ctext%7BKD%7D%3D+%5Cmathbb%7BE%7D_%7B%5Cbm%7Bx%7D+%5Csim+++++++++p_%5Ctext%7Bdata%7D%28%5Cbm%7Bx%7D%29%7D+%5Cbig%5B+D_%5Ctext%7BKL%7D%5Cbig%28T%28%5Cbm%7Bx%7D%29+%5C%2C%5C%7C%5C%2C+S%28%5Cbm%7Bx%7D%29+%5Cbig%29+%5Cbig%5D%2C++%5Cend%7Bequation%7D++%5Ctag%7B13%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=D_%5Ctext%7BKL%7D%28%5Ccdot+%5C%7C+%5Ccdot%29">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=p_%5Ctext%7Bdata%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=x">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=p+%3D+T%28x%29+%5Ctag%7B14%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Chat%7Bp%7D+%3D+%5Coperatorname%7BOneHot%7D%28%5Chat%7By%7D%29+%5Ctag%7B15%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Chat%7Bp%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=x">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+%5Clabel%7Beq%3Across-entropy%7D+++++%5Ccolor%7Bteal%7D%7B%5Cmathcal%7BL%7D_%5Ctext%7BCE%7D%28x%2C+%5Chat%7By%7D%29+%3D+H%28%5Chat%7Bp%7D%2C+p%29+%3D+-+%5Csum_i+%5Chat%7Bp%7D_i+%5Clog+p_i%7D+.+%5Cend%7Bequation%7D+%5Ctag%7B16%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+++++%5Ccolor%7Bteal%7D%7B%5Cmathcal%7BL%7D_%5Ctext%7BReg%7D%28x%29+%3D+%5Clambda_%5Ctext%7Bt%7D+%5Cmathcal%7BL%7D_%5Ctext%7Bt%7D%28x%29+%2B+%5Clambda_%7B%5Cell_2%7D+%5Cmathcal%7BL%7D_%7B%5Cell_2%7D%28x%29%7D%2C+%5Cend%7Bequation%7D+%5Ctag%7B17%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cmathcal%7BL%7D_%5Ctext%7Bt%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cmathcal%7BL%7D_%7B%5Cell_2%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cell_2">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+++++%5Cmathcal%7BL%7D_%5Ctext%7BInc%7D%28x%2C+%5Chat%7By%7D%29+%3D+%5Cmathcal%7BL%7D_%5Ctext%7BCE%7D%28x%2C+%5Chat%7By%7D%29+%2B+%5Cmathcal%7BL%7D_%5Ctext%7BReg%7D%28x%29%2C+%5Cend%7Bequation%7D+%5Ctag%7B18%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Chat%7B%5Cmu%7D%2C%5Chat%7B%5Csigma%7D%5E2">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=x">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cmu%28x%29%2C%5Csigma%5E2%28x%29">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=KL">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbegin%7Balign%7D+%5Clabel%7Beq%3Astat-matching-KL%7D+++++%26D_%5Ctext%7BKL%7D+%5Cbig%28+%5Cmathcal%7BN%7D%28%5Chat%7B%5Cmu%7D%2C+%5Chat%7B%5Csigma%7D%5E2%29+%5C%2C%5C%7C%5C%2C+%5Cmathcal%7BN%7D%28%5Cmu%2C+%5Csigma%5E2%29+%5Cbig%29++++++%5C%5C+%26%3D+%5Clog+%5Cfrac%7B%5Csigma%7D%7B%5Chat%7B%5Csigma%7D%7D+-+%5Cfrac%7B1%7D%7B2%7D+%5CBig%5B+1+-+%5Cfrac%7B%5Chat%7B%5Csigma%7D%5E2+%2B+%28%5Cmu+-+%5Chat%7B%5Cmu%7D%29%5E2%7D%7B%5Csigma%5E2%7D+%5CBig%5D%2C+%5Cend%7Balign%7D+%5Ctag%7B19%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cmathcal%7BN%7D%28%5Ccdot%2C%5Ccdot%29">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+%5Clabel%7Beq%3Astat-matching-l2%7D+++++%5ClVert+%5Cmu+-+%5Chat%7B%5Cmu%7D+%5CrVert_2+%2B+%5ClVert+%5Csigma%5E2+-+%5Chat%7B%5Csigma%7D%5E2+%5CrVert_2%2C+%5Cend%7Bequation%7D+%5Ctag%7B20%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+%5Clabel%7Beq%3Astat-matching%7D+++++%5Ccolor%7Bteal%7D%7B%5Cmathcal%7BL%7D_%5Ctext%7BM%7D%28x%29+%3D+%5Clambda_%5Ctext%7BS%7D+%5Csum_l+%5Cbig%5B+%5ClVert+%5Cmu_l%28x%29+-+%5Chat%7B%5Cmu%7D_l+%5CrVert_2+%2B+%5ClVert+%5Csigma%5E2_l%28x%29+-+%5Chat%7B%5Csigma%7D%5E2_l+%5CrVert_2+%5Cbig%5D%7D%2C+%5Cend%7Bequation%7D+%5Ctag%7B21%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+%5Clabel%7Beq%3Aimg-loss%7D+++++%5Cmathcal%7BL%7D_%5Ctext%7BImage%7D%28x%2C+y%29+%3D+%5Cmathcal%7BL%7D_%5Ctext%7BInc%7D%28x%2C+y%29+%2B+%5Cmathcal%7BL%7D_%5Ctext%7BM%7D%28x%29.+%5Cend%7Bequation%7D++%5Ctag%7B22%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+%5Clabel%7Beq%3Ag-loss%7D+++++%5Cmathcal%7BL%7D_%5Ctext%7BG%7D+%3D+%5Cmathbb%7BE%7D_%7B%5Cbm%7Bz%7D+%5Csim+p_%7B%5Cbm%7Bz%7D%7D%28%5Cbm%7Bz%7D%29%2C+%5Cbm%7By%7D+%5Csim+p_%7B%5Cbm%7By%7D%7D%28%5Cbm%7By%7D%29%7D+%5Cbig%5B+%5Cmathcal%7BL%7D_%5Ctext%7BInc%7D+%5Cbig%28+G%28%5Cbm%7Bz%7D+%5C%2C+%7C+%5C%2C+%5Cbm%7By%7D%29%2C+%5Cbm%7By%7D+%5Cbig%29+%2B+%5Cmathcal%7BL%7D_%5Ctext%7BM%7D+%5Cbig%28+G%28%5Cbm%7Bz%7D+%5C%2C+%7C+%5C%2C+%5Cbm%7By%7D%29+%5Cbig%29+%5Cbig%5D.+%5Cend%7Bequation%7D+%5Ctag%7B23%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Ccolor%7Bteal%7D%7B%5Cmathcal%7BL%7D_%5Ctext%7BCE%7D%28x%2C+%5Chat%7By%7D%29%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-aaf2c37c57d7ae6659b8bb70b68bfc0d_1440w.jpg">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5B1%2C0%2C0%2C0%2C...%2C0%5D">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-9b9d274cc2699fd4b17b2b46796dbbd5_1440w.jpg">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-38cfdde3c43d701809ceb1fad44f443d_1440w.jpg">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-5cf5928461d2645d419149cb6e13f6f9_1440w.jpg">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-3a8598b6c68bb1703a138b348b2f0610_1440w.jpg">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cbm%7Bz%7D">
+<meta property="og:image" content="https://pic4.zhimg.com/80/v2-1dab7684a6ebb35f19b7b33c5ad196cb_1440w.jpg">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-7e18583ea7a009300ad622267b029040_1440w.jpg">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G">
+<meta property="article:published_time" content="2021-11-30T08:24:15.309Z">
+<meta property="article:modified_time" content="2021-11-30T08:25:28.683Z">
+<meta property="article:author" content="CY">
+<meta property="article:tag" content="无数据蒸馏">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yao-chen-ecnu.github.io/images/Large-Scale%20Generative%20Data-Free%20Distillation/image-20211108143737568.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://yao-chen-ecnu.github.io/2021/11/30/Large-Scale%20Generative%20Data-Free%20Distillation/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="CY" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    <link href="//cdn.jsdelivr.net/npm/katex@0.9.0/dist/katex.min.css" rel="stylesheet">
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/Yao-chen-ecnu" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar1.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">C Y</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Web Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> ShangHai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/">区块链</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">15</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Solidity/" rel="tag">Solidity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">区块链+联邦学习</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E5%AD%A6%E4%B9%A0/" rel="tag">无数据学习</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E8%92%B8%E9%A6%8F/" rel="tag">无数据蒸馏</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" rel="tag">知识蒸馏</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">联邦学习</a><span class="tag-list-count">6</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/Solidity/" style="font-size: 13px;">Solidity</a> <a href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 13.5px;">区块链+联邦学习</a> <a href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E5%AD%A6%E4%B9%A0/" style="font-size: 13px;">无数据学习</a> <a href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E8%92%B8%E9%A6%8F/" style="font-size: 13.5px;">无数据蒸馏</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" style="font-size: 13.5px;">知识蒸馏</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13px;">算法</a> <a href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 14px;">联邦学习</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Deep%20Mutual%20Learning/" class="title">Deep Mutual Learning</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T08:30:48.984Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Learning%20Student%20Networks%20in%20the%20Wild/" class="title">Learning Student Networks in the wild</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T08:27:30.000Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Large-Scale%20Generative%20Data-Free%20Distillation/" class="title">Large-Scale Generative Data-Free Distillation</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T08:24:15.309Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Data-Free%20Knowledge%20Distillation%20for%20Heterogeneous%20Federated%20Learning/" class="title">Data-Free Knowledge Distillation for Heterogeneous Federated Learning</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T08:19:05.665Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Contrastive%20Model%20Inversion%20for%20Data-Free%20Knowledge%20Distillation/" class="title">Constrastive Model Inversion for Data-Free Knowledge Distillation</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T08:12:36.547Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-Large-Scale Generative Data-Free Distillation" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Large-Scale Generative Data-Free Distillation
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/11/30/Large-Scale%20Generative%20Data-Free%20Distillation/" class="article-date">
+	  <time datetime="2021-11-30T08:24:15.309Z" itemprop="datePublished">2021-11-30</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E8%92%B8%E9%A6%8F/" rel="tag">无数据蒸馏</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/11/30/Large-Scale%20Generative%20Data-Free%20Distillation/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 3.6k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 12(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p><img src="/images/Large-Scale%20Generative%20Data-Free%20Distillation/image-20211108143737568.png" alt></p>
+<h2 id="介绍"><a class="markdownIt-Anchor" href="#介绍"></a> 介绍</h2>
+<p>谷歌提出的这个适合大数据集的无需训练数据的网络压缩技术基于上次介绍的 DAFL，解决的主要问题是 DAFL 无法在大数据集上使用的问题。</p>
+<p>知识蒸馏方法是解决无标注模型压缩问题的一种重要的手段。但是它的假设是在蒸馏阶段训练数据集是可得到的。但是实际情况是：在现实中的应用上，由于隐私因素的制约或者传输条件的限制，我们无法获得训练数据。比如：在医学图像场景中，用户不想让自己的照片 (数据) 被泄露；训练数据太多没办法传到云端，甚至是存储这些巨大量的数据集对于小型企业都是个难题；所以，使用常规的模型压缩办法在这些限制下无法被使用。</p>
+<p>**DAFL的特点是：**待压缩网络看作一个固定的判别器 <img src="https://www.zhihu.com/equation?tex=D" alt="[公式]"> ，用生成器 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> 输出的生成图片代替训练数据集进行训练，设计了伪标签交叉熵损失，特征激活损失函数，信息熵损失函数来训练生成器 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> ，使用生成数据结合蒸馏算法得到压缩后的网络。</p>
+<p>本文就是基于 DAFL 实现的，<strong>解决了 DAFL 无法在大数据集 ImageNet 上使用的问题</strong>。</p>
+<p>本文的方法框架如下图9所示。本质上和 DAFL 的两个阶段是一致的，都是先用生成器 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> 输出的生成图片代替训练数据集进行训练，然后使用生成数据结合蒸馏算法得到压缩后的网络。主要具体介绍是怎么做，能够解决了 DAFL 无法在大数据集 ImageNet 上使用的问题的。</p>
+<p><img src="https://pic2.zhimg.com/80/v2-a3b4dc4670b41b711fd23960ef2a9ed5_1440w.jpg" alt="img"></p>
+<h2 id="方法"><a class="markdownIt-Anchor" href="#方法"></a> 方法</h2>
+<h3 id="知识蒸馏方法获得学生网络"><a class="markdownIt-Anchor" href="#知识蒸馏方法获得学生网络"></a> <strong>知识蒸馏方法获得学生网络</strong></h3>
+<p>蒸馏算法最早由Hinton提出，待压缩网络 (教师网络) 为一个具有高准确率但参数很多的神经网络，初始化一个参数较少的学生网络，通过让学生网络的输出和教师网络相同，学生网络的准确率在教师的指导下得到提高。</p>
+<p>从结构和参数的角度看，待压缩的大网络的结构和参数都是未知的，这就使得我们无法通过剪枝或者量化等经典的神经网络压缩方法进行模型压缩，我们唯一已知的就是待压缩的大网络的输入和输出接口。</p>
+<p>令 <img src="https://www.zhihu.com/equation?tex=T%28%5Cbm%7Bx%7D%3B+%5Ctheta_t%29" alt="[公式]"> 和 <img src="https://www.zhihu.com/equation?tex=S%28%5Cbm%7Bx%7D%3B+%5Ctheta_s%29" alt="[公式]"> 分别代表教师和学生网络，则作者使用交叉熵损失来使得学生网络的输出符合教师网络的输出，具体的损失函数为：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D++++++%5Cmathcal%7BL%7D_%5Ctext%7BKD%7D%3D+%5Cmathbb%7BE%7D_%7B%5Cbm%7Bx%7D+%5Csim+++++++++p_%5Ctext%7Bdata%7D%28%5Cbm%7Bx%7D%29%7D+%5Cbig%5B+D_%5Ctext%7BKL%7D%5Cbig%28T%28%5Cbm%7Bx%7D%29+%5C%2C%5C%7C%5C%2C+S%28%5Cbm%7Bx%7D%29+%5Cbig%29+%5Cbig%5D%2C++%5Cend%7Bequation%7D++%5Ctag%7B13%7D" alt="[公式]"></p>
+<p>式中， <img src="https://www.zhihu.com/equation?tex=D_%5Ctext%7BKL%7D%28%5Ccdot+%5C%7C+%5Ccdot%29" alt="[公式]"> 指KL 散度损失函数，描述的是教师网络和学生网络的输出的差异， <img src="https://www.zhihu.com/equation?tex=p_%5Ctext%7Bdata%7D" alt="[公式]"> 指训练数据的分布，这里的训练数据和 DAFL 一样后续通过 GAN 来生成。通过引入教师学生算法，作者解决了生成图片没有标签的问题，并且可以在待压缩网络结构未知的情况下对其进行压缩。</p>
+<h3 id="通过-gan-生成无标注的训练图片"><a class="markdownIt-Anchor" href="#通过-gan-生成无标注的训练图片"></a> <strong>通过 GAN 生成无标注的训练图片</strong></h3>
+<p>从训练数据的角度看，在整个网络压缩的过程中，我们都没有任何给定的训练数据，在此情况下，神经网络的压缩变得十分困难。所以作者通过 GAN 来输出一些无标注的训练图片，以便于神经网络的压缩。生成对抗网络 (GAN) 是一种可以生成数据的方法，包含生成网络 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> 与判别网络 <img src="https://www.zhihu.com/equation?tex=D" alt="[公式]"> ，生成网络希望输出和真实数据类似的图片来骗过判别器，判别网络通过判别生成图片和真实图片的真伪来帮助生成网络训练。</p>
+<p>这个基本的流程和 DAFL 是一致的，但是本文的目标函数设计与 DAFL 有差别。</p>
+<p><strong>1) Inceptionism loss</strong></p>
+<p>这个损失函数设计来自于 Inceptionism: Going deeper into neural networks 这篇论文。Inceptionism-style 图像生成，又叫做 DeepDream，是一种在已训练好的网络情况下，可视化能产生特定输出的输入图片的样子的方法。比如现在有一个<strong>训练好的网络</strong>，我们想知道<strong>什么样的图片可以让这个网络分类为 “狗”</strong>。怎么做呢？首先用<strong>随机噪声初始化</strong>一个可训练的图片 <strong>trainable image</strong>，不断地更新其参数，使得这个已有的网络的输出与 “狗” 这个类越接近越好，也就是<strong>训练这个 trainable image，让网络输出更像 “狗”</strong>。</p>
+<p>回到上面，我们现在有一个生成器 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> ，它会输出一堆图片，比如说其中一张是 <img src="https://www.zhihu.com/equation?tex=x" alt="[公式]"> ，作者依然是使用给定的，预训练好的教师网络的输出来标注它：</p>
+<p><img src="https://www.zhihu.com/equation?tex=p+%3D+T%28x%29+%5Ctag%7B14%7D" alt="[公式]"></p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Chat%7Bp%7D+%3D+%5Coperatorname%7BOneHot%7D%28%5Chat%7By%7D%29+%5Ctag%7B15%7D" alt="[公式]"></p>
+<p>我们认为 <img src="https://www.zhihu.com/equation?tex=%5Chat%7Bp%7D" alt="[公式]"> 就是这张图片 <img src="https://www.zhihu.com/equation?tex=x" alt="[公式]"> 对应的类别。那么在训练生成器 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> 的时候需要优化下式这个损失函数：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+%5Clabel%7Beq%3Across-entropy%7D+++++%5Ccolor%7Bteal%7D%7B%5Cmathcal%7BL%7D_%5Ctext%7BCE%7D%28x%2C+%5Chat%7By%7D%29+%3D+H%28%5Chat%7Bp%7D%2C+p%29+%3D+-+%5Csum_i+%5Chat%7Bp%7D_i+%5Clog+p_i%7D+.+%5Cend%7Bequation%7D+%5Ctag%7B16%7D" alt="[公式]"></p>
+<p>由于生成图片并没有一个真实的标签，我们直接将其输出最大值对应的标签设定为它的伪标签。 伪标签交叉熵损失的意思就是对于一张生成的图片，它的标签就按照教师网络的输出来决定。</p>
+<p>为了使得生成的图片更加接近自然图片，作者另外加了一个先验，比如相邻像素之间的特定联系，体现在加了一个归一化损失：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+++++%5Ccolor%7Bteal%7D%7B%5Cmathcal%7BL%7D_%5Ctext%7BReg%7D%28x%29+%3D+%5Clambda_%5Ctext%7Bt%7D+%5Cmathcal%7BL%7D_%5Ctext%7Bt%7D%28x%29+%2B+%5Clambda_%7B%5Cell_2%7D+%5Cmathcal%7BL%7D_%7B%5Cell_2%7D%28x%29%7D%2C+%5Cend%7Bequation%7D+%5Ctag%7B17%7D" alt="[公式]"></p>
+<p>式中， <img src="https://www.zhihu.com/equation?tex=%5Cmathcal%7BL%7D_%5Ctext%7Bt%7D" alt="[公式]"> 是指 total variation loss， <img src="https://www.zhihu.com/equation?tex=%5Cmathcal%7BL%7D_%7B%5Cell_2%7D" alt="[公式]"> 是指 <img src="https://www.zhihu.com/equation?tex=%5Cell_2" alt="[公式]"> 范数，其加权就是这个归一化损失。</p>
+<p>所以，Inceptionism loss 就是再结合16式和这个归一化损失：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+++++%5Cmathcal%7BL%7D_%5Ctext%7BInc%7D%28x%2C+%5Chat%7By%7D%29+%3D+%5Cmathcal%7BL%7D_%5Ctext%7BCE%7D%28x%2C+%5Chat%7By%7D%29+%2B+%5Cmathcal%7BL%7D_%5Ctext%7BReg%7D%28x%29%2C+%5Cend%7Bequation%7D+%5Ctag%7B18%7D" alt="[公式]"></p>
+<p><strong>2) Moment matching loss</strong></p>
+<p>**Inceptionism loss 只对教师网络的输出做了约束，现在还没有对于中间层的约束。**之前的研究表明神经网络的不同层的输出具有不同的特点，也可以用在不同的任务上面。比如浅层的输出一般是用于检测一些低阶特征比如说物体的边角等等；深层的输出一般是用于检测一些高阶特征比如说语义信息。根据实际情况数据的观测，只使用 Inceptionism loss 会导致中间特征出现异常值，所以这启发作者要针对中间特征加一些约束项。</p>
+<p>作者考虑到了 Batch Norm 层，它可以帮助提供这些中间特征。Batch Norm 操作一般是通过滑动平均的均值和方差 ( moving averaged mean and variance) re-centering 和 rescaling 来归一化中间层的输出，所以说 Batch Norm 层其实隐式地存储了输入数据的一些信息。</p>
+<p>给定教师网络的 Batch Norm 层的均值和方差 <img src="https://www.zhihu.com/equation?tex=%5Chat%7B%5Cmu%7D%2C%5Chat%7B%5Csigma%7D%5E2" alt="[公式]"> ，我们去计算某张生成的图片 <img src="https://www.zhihu.com/equation?tex=x" alt="[公式]"> 的均值和方差 <img src="https://www.zhihu.com/equation?tex=%5Cmu%28x%29%2C%5Csigma%5E2%28x%29" alt="[公式]"> ，我们希望它们尽量地接近，方法就是：</p>
+<p>最小化 <img src="https://www.zhihu.com/equation?tex=KL" alt="[公式]"> 散度：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Cbegin%7Balign%7D+%5Clabel%7Beq%3Astat-matching-KL%7D+++++%26D_%5Ctext%7BKL%7D+%5Cbig%28+%5Cmathcal%7BN%7D%28%5Chat%7B%5Cmu%7D%2C+%5Chat%7B%5Csigma%7D%5E2%29+%5C%2C%5C%7C%5C%2C+%5Cmathcal%7BN%7D%28%5Cmu%2C+%5Csigma%5E2%29+%5Cbig%29++++++%5C%5C+%26%3D+%5Clog+%5Cfrac%7B%5Csigma%7D%7B%5Chat%7B%5Csigma%7D%7D+-+%5Cfrac%7B1%7D%7B2%7D+%5CBig%5B+1+-+%5Cfrac%7B%5Chat%7B%5Csigma%7D%5E2+%2B+%28%5Cmu+-+%5Chat%7B%5Cmu%7D%29%5E2%7D%7B%5Csigma%5E2%7D+%5CBig%5D%2C+%5Cend%7Balign%7D+%5Ctag%7B19%7D" alt="[公式]"></p>
+<p>式中 <img src="https://www.zhihu.com/equation?tex=%5Cmathcal%7BN%7D%28%5Ccdot%2C%5Ccdot%29" alt="[公式]"> 代表高斯分布。</p>
+<p>或者直接距离接近：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+%5Clabel%7Beq%3Astat-matching-l2%7D+++++%5ClVert+%5Cmu+-+%5Chat%7B%5Cmu%7D+%5CrVert_2+%2B+%5ClVert+%5Csigma%5E2+-+%5Chat%7B%5Csigma%7D%5E2+%5CrVert_2%2C+%5Cend%7Bequation%7D+%5Ctag%7B20%7D" alt="[公式]"></p>
+<p>本文最终使用了式20的方法，简单直接，所以 Moment matching loss 定义为：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+%5Clabel%7Beq%3Astat-matching%7D+++++%5Ccolor%7Bteal%7D%7B%5Cmathcal%7BL%7D_%5Ctext%7BM%7D%28x%29+%3D+%5Clambda_%5Ctext%7BS%7D+%5Csum_l+%5Cbig%5B+%5ClVert+%5Cmu_l%28x%29+-+%5Chat%7B%5Cmu%7D_l+%5CrVert_2+%2B+%5ClVert+%5Csigma%5E2_l%28x%29+-+%5Chat%7B%5Csigma%7D%5E2_l+%5CrVert_2+%5Cbig%5D%7D%2C+%5Cend%7Bequation%7D+%5Ctag%7B21%7D" alt="[公式]"></p>
+<p>最后，我们将这三个损失函数 <strong>(17,21式)</strong> 组合起来，就可以得到我们生成器总的损失函数：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+%5Clabel%7Beq%3Aimg-loss%7D+++++%5Cmathcal%7BL%7D_%5Ctext%7BImage%7D%28x%2C+y%29+%3D+%5Cmathcal%7BL%7D_%5Ctext%7BInc%7D%28x%2C+y%29+%2B+%5Cmathcal%7BL%7D_%5Ctext%7BM%7D%28x%29.+%5Cend%7Bequation%7D++%5Ctag%7B22%7D" alt="[公式]"></p>
+<p>生成器的优化目标是：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Cbegin%7Bequation%7D+%5Clabel%7Beq%3Ag-loss%7D+++++%5Cmathcal%7BL%7D_%5Ctext%7BG%7D+%3D+%5Cmathbb%7BE%7D_%7B%5Cbm%7Bz%7D+%5Csim+p_%7B%5Cbm%7Bz%7D%7D%28%5Cbm%7Bz%7D%29%2C+%5Cbm%7By%7D+%5Csim+p_%7B%5Cbm%7By%7D%7D%28%5Cbm%7By%7D%29%7D+%5Cbig%5B+%5Cmathcal%7BL%7D_%5Ctext%7BInc%7D+%5Cbig%28+G%28%5Cbm%7Bz%7D+%5C%2C+%7C+%5C%2C+%5Cbm%7By%7D%29%2C+%5Cbm%7By%7D+%5Cbig%29+%2B+%5Cmathcal%7BL%7D_%5Ctext%7BM%7D+%5Cbig%28+G%28%5Cbm%7Bz%7D+%5C%2C+%7C+%5C%2C+%5Cbm%7By%7D%29+%5Cbig%29+%5Cbig%5D.+%5Cend%7Bequation%7D+%5Ctag%7B23%7D" alt="[公式]"></p>
+<p>通过优化以上的损失函数，训练得到的生成器可以和真实的样本在待压缩网络具有类似的响应，从而更接近真实样本，且生成的数据的分布十分均匀。</p>
+<p><strong>2.13 使用多个生成器</strong></p>
+<p>模式坍塌是 GAN 网络中的一个很严重的问题，生成器 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> 往往不会输出各式各样的生成图片，反而会产生很单一的样式的图片，且不会随着输入隐变量的变化而变化。</p>
+<p>为什么在这个任务中会产生模式坍塌的问题？一种可能的解释是：生成器持续地产生一种图片，这种图片经过教师网络会输出一个很像 One-hot 编码的结果，这个结果就会导致 <img src="https://www.zhihu.com/equation?tex=%5Ccolor%7Bteal%7D%7B%5Cmathcal%7BL%7D_%5Ctext%7BCE%7D%28x%2C+%5Chat%7By%7D%29%7D" alt="[公式]"> 消失了，即使其他的损失函数还没有优化到最优值。下图10就是一个典型的模式坍塌的例子，生成器 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> 生成了很多的自然图片，但是无一例外都是红色的车。</p>
+<p><img src="https://pic2.zhimg.com/80/v2-aaf2c37c57d7ae6659b8bb70b68bfc0d_1440w.jpg" alt="img"></p>
+<p>为了解决模式坍塌的问题，训练多个 Generator 是一种简单有效的解决模式坍塌问题的方法。每个 Generator 只生成一个类的数据，比如说在训练第1个 Generator 时，它的训练目标就是使得教师网络的输出和 <img src="https://www.zhihu.com/equation?tex=%5B1%2C0%2C0%2C0%2C...%2C0%5D" alt="[公式]"> 越接近越好。生成的图片如下图所示。</p>
+<p><img src="https://pic2.zhimg.com/80/v2-9b9d274cc2699fd4b17b2b46796dbbd5_1440w.jpg" alt="img"></p>
+<p><strong>2.14 实验结果</strong></p>
+<p>作者在CIFAR-10、CIFAR-100、ImageNet三个数据集上分别进行了实验。</p>
+<p><strong>CIFAR-10 实验</strong></p>
+<p>使用的教师和学生模型分别为 <strong>Resnet-34</strong> 和 <strong>Resnet-18</strong>，结果如下图12所示。</p>
+<p>图12的前三行是在原始数据集的实验结果。我们以 CIFAR-10 数据集的结果为例。</p>
+<ul>
+<li>使用原始数据集，教师网络可以达到 95.05% 的精度。</li>
+<li>使用原始数据集，学生网络可以达到 93.92% 的精度。</li>
+<li>使用原始数据集，学生网络+蒸馏方法可以达到 94.34% 的精度，轻微有损。</li>
+<li>不使用任何数据集，只使用噪声图片+蒸馏方法只能达到 11.43% 的精度，相当于训练失败。</li>
+<li>使用 DAFL 方法，学生网络+蒸馏方法可以达到 92.22% 的精度。</li>
+<li>使用 DFAD 方法，学生网络+蒸馏方法可以达到 93.3% 的精度。</li>
+<li>使用 Adaptive DeepInversion 方法，学生网络+蒸馏方法可以达到 93.26% 的精度。</li>
+<li>使用本文的方法，学生网络+蒸馏方法最高可以达到 <strong>95.02%</strong> 的精度，去掉一些损失函数以后，精度会有略微的下降，证明本文所提出的损失函数的重要性。</li>
+</ul>
+<p><img src="https://pic2.zhimg.com/80/v2-38cfdde3c43d701809ceb1fad44f443d_1440w.jpg" alt="img"></p>
+<p>下图13是不同方法生成的图片的可视化结果的对比。 正如我们所看到的，尽管ADI可以产生比以往的方法高得多的图像质量，但它倾向于合成具有不同纹理但背景相似的图像 (如马类、船类和卡车类)。相比之下，本文的方法可以生成更真实的图像，与真实图片的分布更加相似。</p>
+<p><img src="https://pic2.zhimg.com/80/v2-5cf5928461d2645d419149cb6e13f6f9_1440w.jpg" alt="img"></p>
+<p><strong>CIFAR-100 实验</strong></p>
+<p>使用的教师和学生模型分别为 <strong>Resnet-34</strong> 和 <strong>Resnet-18</strong>，结果如下图14所示。</p>
+<p>图14的前三行是在原始数据集的实验结果。我们以 CIFAR-10 数据集的结果为例。</p>
+<ul>
+<li>使用原始数据集，教师网络可以达到 77.26% 的精度。</li>
+<li>使用原始数据集，学生网络可以达到 76.53% 的精度。</li>
+<li>使用原始数据集，学生网络+蒸馏方法可以达到 76.87% 的精度，轻微有损。</li>
+<li>不使用任何数据集，只使用噪声图片+蒸馏方法只能达到 1.23% 的精度，相当于训练失败。</li>
+<li>使用 DAFL 方法，学生网络+蒸馏方法可以达到 74.47% 的精度。</li>
+<li>使用 DFAD 方法，学生网络+蒸馏方法可以达到 67.7% 的精度。</li>
+<li>使用 Adaptive DeepInversion 方法，学生网络+蒸馏方法可以达到 93.26% 的精度。</li>
+<li>使用本文的方法，在<strong>单个 Generator</strong> 的情况下，学生网络+蒸馏方法最高可以达到 <strong>76.42%</strong> 的精度，去掉一些损失函数以后，精度会有略微的下降，证明本文所提出的损失函数的重要性。在需要少量的数据的情况下，成为meta-data的方法，可以达到77.16%的精度，使用多个 <strong>Generator</strong> 的情况下，不使用任何数据，可以达到77.02%的精度。</li>
+</ul>
+<p><img src="https://pic1.zhimg.com/80/v2-3a8598b6c68bb1703a138b348b2f0610_1440w.jpg" alt="img"></p>
+<p><strong>ImageNet 实验</strong></p>
+<p>使用的教师模型为 <strong>Resnet-34</strong>。</p>
+<p>作者训练了1000个 Generator，每个 Generator的结构和之前的实验保持一致，额外添加了2个 upscale 层提升生成图片的维度。 由于内存限制，作者还将隐变量 <img src="https://www.zhihu.com/equation?tex=%5Cbm%7Bz%7D" alt="[公式]"> 的维度从 1024 减少到512。为了估计每个类的统计数据，我们对每个类采样100张图像。注意，这种抽样可以在教师网络训练期间进行。</p>
+<p>结果如下图15所示，对比的几个模型是：</p>
+<ul>
+<li>使用原始数据集，有监督地训练模型，在 Imagenet 上可以达到 75.45% 的精度。</li>
+<li>数据集使用 BigGAN 来生成，学生网络+蒸馏方法可以达到 64.0% 的精度，有损。</li>
+<li>数据集使用 DeepInversion 来生成，学生网络+蒸馏方法可以达到 68.0% 的精度，有损。DeepInversion 通过对 trainable images 的直接优化来合成图像。这种方法是非常耗时，但在理论上比使用生成模型有潜力产生更多样化的图像。</li>
+<li>数据集使用本文方法来生成，学生网络+蒸馏方法可以达到 69.75% 的精度，有损。</li>
+</ul>
+<p><img src="https://pic4.zhimg.com/80/v2-1dab7684a6ebb35f19b7b33c5ad196cb_1440w.jpg" alt="img"></p>
+<p>最后作者也比较了不同架构的学生网络的蒸馏结果，如下图16所示。使用的教师模型为 <strong>Resnet-34</strong>，其精度为75.45%。作者对所有的学生网络使用相同的生成器 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> 。ResNet-50的性能最好，与有监督方式训练的模型相比，精度下降了5.70%。然而，ResNet-18 和MobileNetV2 上的性能结果要差得多，与有监督方式训练的模型有更大的差距。这表明，学生和教师结构之间可能存在一些纠缠，使得在 ResNet-50 上学习的生成器 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> MobileNetV2 和 ResNet-18 上的效率低于 ResNet-50 作为学生网络。如何提高其泛化能力仍是未来研究的课题。</p>
+<p><img src="https://pic1.zhimg.com/80/v2-7e18583ea7a009300ad622267b029040_1440w.jpg" alt="img"></p>
+<p><strong>小结</strong></p>
+<p>本质上和 DAFL 的两个阶段是一致的，都是先用生成器 <img src="https://www.zhihu.com/equation?tex=G" alt="[公式]"> 输出的生成图片代替训练数据集进行训练，然后使用生成数据结合蒸馏算法得到压缩后的网络。本文方法通过 Inceptionism loss 和 Moment matching loss，以及训练多个生成器来解决 DAFL 无法在大数据集 ImageNet 上使用的问题。</p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://yao-chen-ecnu.github.io/2021/11/30/Large-Scale%20Generative%20Data-Free%20Distillation/" title="Large-Scale Generative Data-Free Distillation" target="_blank" rel="external">https://yao-chen-ecnu.github.io/2021/11/30/Large-Scale%20Generative%20Data-Free%20Distillation/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/Yao-chen-ecnu" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar1.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/Yao-chen-ecnu" target="_blank"><span class="text-dark">C Y</span><small class="ml-1x">Web Developer &amp; Designer</small></a></h3>
+        <div>记录生活点点滴滴</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/11/30/Learning%20Student%20Networks%20in%20the%20Wild/" title="Learning Student Networks in the wild"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/11/30/Data-Free%20Knowledge%20Distillation%20for%20Heterogeneous%20Federated%20Learning/" title="Data-Free Knowledge Distillation for Heterogeneous Federated Learning"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+
+</html>

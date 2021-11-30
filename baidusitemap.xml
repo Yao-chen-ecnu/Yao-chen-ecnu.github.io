@@ -1,6 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://yao-chen-ecnu.github.io/2021/11/30/Deep%20Mutual%20Learning/</loc>
+    <lastmod>2021-11-30</lastmod>
+  </url>
+  <url>
+    <loc>https://yao-chen-ecnu.github.io/2021/11/30/Learning%20Student%20Networks%20in%20the%20Wild/</loc>
+    <lastmod>2021-11-30</lastmod>
+  </url>
+  <url>
+    <loc>https://yao-chen-ecnu.github.io/2021/11/30/Large-Scale%20Generative%20Data-Free%20Distillation/</loc>
+    <lastmod>2021-11-30</lastmod>
+  </url>
+  <url>
+    <loc>https://yao-chen-ecnu.github.io/2021/11/30/Data-Free%20Adversarial%20Distillation/</loc>
+    <lastmod>2021-11-30</lastmod>
+  </url>
+  <url>
+    <loc>https://yao-chen-ecnu.github.io/2021/11/30/Contrastive%20Model%20Inversion%20for%20Data-Free%20Knowledge%20Distillation/</loc>
+    <lastmod>2021-11-30</lastmod>
+  </url>
+  <url>
+    <loc>https://yao-chen-ecnu.github.io/2021/11/30/Data-Free%20Knowledge%20Distillation%20for%20Heterogeneous%20Federated%20Learning/</loc>
+    <lastmod>2021-11-30</lastmod>
+  </url>
+  <url>
     <loc>https://yao-chen-ecnu.github.io/2021/11/30/Data-Free%20Learning%20of%20Student%20Networks/</loc>
     <lastmod>2021-11-30</lastmod>
   </url>

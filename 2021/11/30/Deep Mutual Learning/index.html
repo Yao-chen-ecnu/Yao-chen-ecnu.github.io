@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Deep Mutual Learning | CY的博客</title>
+  <meta name="description" content="Abstract 蒸馏模型是一种将知识从教师网络（teacher）传递到学生网络（student）的有效且广泛使用的技术。通常来说，蒸馏模型是从功能强大的大型网络或集成网络转移到结构简单，运行快速的小型网络。本文决定打破这种预先定义好的“强弱关系”，提出了一种深度相互学习策略(deep mutual learning, DML)，在此策略中，一组学生网络在整个训练过程中相互学习、相互指导，而不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Deep Mutual Learning">
+<meta property="og:url" content="https://yao-chen-ecnu.github.io/2021/11/30/Deep%20Mutual%20Learning/index.html">
+<meta property="og:site_name" content="CY">
+<meta property="og:description" content="Abstract 蒸馏模型是一种将知识从教师网络（teacher）传递到学生网络（student）的有效且广泛使用的技术。通常来说，蒸馏模型是从功能强大的大型网络或集成网络转移到结构简单，运行快速的小型网络。本文决定打破这种预先定义好的“强弱关系”，提出了一种深度相互学习策略(deep mutual learning, DML)，在此策略中，一组学生网络在整个训练过程中相互学习、相互指导，而不">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Deep%20Mutual%20Learning/image-20211130140351865.png">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/BnSNEaficFAYEibUD3rzPCqDh6vuY6PI8QqJGRr5amCgCGgZBWibzIopB2gianctbEO3ibwEzy7nXVIHDZKSz5cSiaicQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/BnSNEaficFAYEibUD3rzPCqDh6vuY6PI8QASn9mVZmicENzRDynxxSG1jiaK33e4S9ULoKjNOictMiaMCiaTxHnXSJAaA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=qi">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=Zi+">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=Zj">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=T">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=T">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=T+">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=M">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=N">
+<meta property="og:image" content="https://pic4.zhimg.com/80/v2-1d62051daa019e8e3ca47677e0c3456b_1440w.png">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-e484327cfacd0f21019a9dc99c4ab69c_1440w.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=xi">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=m">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=z%5E%7Bm%7D">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/BnSNEaficFAYEibUD3rzPCqDh6vuY6PI8QBibVpE1MjjZk9ZsbqBunnCElsa7ny03aiah55t7UjrQIB6n5QIA5LyqA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=I">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-aed8b0338027da9f1ade012cd544d0a0_1440w.png">
+<meta property="og:image" content="https://pic3.zhimg.com/80/v2-f401129423b17da31fd8f9212db97862_1440w.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Deep%20Mutual%20Learning/image-20211130143213341.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cfrac%7B1%7D%7BK-1%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Ctheta+k">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Deep%20Mutual%20Learning/image-20211130145027518.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Deep%20Mutual%20Learning/image-20211130145043461.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Deep%20Mutual%20Learning/image-20211130145100906.png">
+<meta property="og:image" content="https://yao-chen-ecnu.github.io/images/Deep%20Mutual%20Learning/image-20211130145121174.png">
+<meta property="article:published_time" content="2021-11-30T08:30:48.984Z">
+<meta property="article:modified_time" content="2021-11-30T08:32:38.840Z">
+<meta property="article:author" content="CY">
+<meta property="article:tag" content="联邦学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yao-chen-ecnu.github.io/images/Deep%20Mutual%20Learning/image-20211130140351865.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://yao-chen-ecnu.github.io/2021/11/30/Deep%20Mutual%20Learning/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="CY" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    <link href="//cdn.jsdelivr.net/npm/katex@0.9.0/dist/katex.min.css" rel="stylesheet">
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/Yao-chen-ecnu" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar1.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">C Y</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Web Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> ShangHai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/">区块链</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">区块链+联邦学习论文阅读笔记</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">15</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Solidity/" rel="tag">Solidity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">区块链+联邦学习</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E5%AD%A6%E4%B9%A0/" rel="tag">无数据学习</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E8%92%B8%E9%A6%8F/" rel="tag">无数据蒸馏</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" rel="tag">知识蒸馏</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">联邦学习</a><span class="tag-list-count">6</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/Solidity/" style="font-size: 13px;">Solidity</a> <a href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE-%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 13.5px;">区块链+联邦学习</a> <a href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E5%AD%A6%E4%B9%A0/" style="font-size: 13px;">无数据学习</a> <a href="/tags/%E6%97%A0%E6%95%B0%E6%8D%AE%E8%92%B8%E9%A6%8F/" style="font-size: 13.5px;">无数据蒸馏</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F/" style="font-size: 13.5px;">知识蒸馏</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13px;">算法</a> <a href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 14px;">联邦学习</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Deep%20Mutual%20Learning/" class="title">Deep Mutual Learning</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T08:30:48.984Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Learning%20Student%20Networks%20in%20the%20Wild/" class="title">Learning Student Networks in the wild</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T08:27:30.000Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Large-Scale%20Generative%20Data-Free%20Distillation/" class="title">Large-Scale Generative Data-Free Distillation</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T08:24:15.309Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Data-Free%20Knowledge%20Distillation%20for%20Heterogeneous%20Federated%20Learning/" class="title">Data-Free Knowledge Distillation for Heterogeneous Federated Learning</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T08:19:05.665Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/11/30/Contrastive%20Model%20Inversion%20for%20Data-Free%20Knowledge%20Distillation/" class="title">Constrastive Model Inversion for Data-Free Knowledge Distillation</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-11-30T08:12:36.547Z" itemprop="datePublished">2021-11-30</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-Deep Mutual Learning" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Deep Mutual Learning
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/11/30/Deep%20Mutual%20Learning/" class="article-date">
+	  <time datetime="2021-11-30T08:30:48.984Z" itemprop="datePublished">2021-11-30</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/" rel="tag">联邦学习</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/11/30/Deep%20Mutual%20Learning/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 3.8k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 13(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p><img src="/images/Deep%20Mutual%20Learning/image-20211130140351865.png" alt></p>
+<h2 id="abstract"><a class="markdownIt-Anchor" href="#abstract"></a> Abstract</h2>
+<p>蒸馏模型是一种将知识从教师网络（teacher）传递到学生网络（student）的有效且广泛使用的技术。通常来说，蒸馏模型是从功能强大的大型网络或集成网络转移到结构简单，运行快速的小型网络。本文决定打破这种预先定义好的“强弱关系”，提出了一种深度相互学习策略(<strong>deep mutual learning, DML</strong>)，在此策略中，一组学生网络在整个训练过程中相互学习、相互指导，而不是静态的预先定义好教师和学生之间的单向转换通路。作者通过在CIFAR-100和Market-1501数据集上的实验，表明DML网络在分类和任务重识别任务中的有效性。更重要的是，DML的成功揭示了没有强大的教师网络是可行的，相互学习的对象是由一个个简单的学生网络组成的集合。</p>
+<h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+<p>深度神经网络已经广泛应用到计算机视觉的各个任务中，并获得了很好的性能表现，但是，这种SOTA通常是依靠深度堆叠网络层数，增加网络宽度实现，这种结构设计会产生大量的参数，一方面，会拖慢运行速度和执行效率，另一方面，需要很大的存储空间进行存储。这两方面也限制了很多网络在实际应用中落地。因此，如何在保证效果的情况下设计更小，更快速的网络，就成了我们关注的重点。基于这种思想，涌现了很多好的工作，蒸馏模型（model distillation）就是其中的代表，为了更好地学习小型网络，蒸馏方法从一个强大的(更深或更宽)教师网络开始，然后训练一个更小的学生网络来模仿教师网络。下图是蒸馏模型的一个结构表示</p>
+<img src="https://mmbiz.qpic.cn/mmbiz_png/BnSNEaficFAYEibUD3rzPCqDh6vuY6PI8QqJGRr5amCgCGgZBWibzIopB2gianctbEO3ibwEzy7nXVIHDZKSz5cSiaicQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1" alt="图片" style="zoom:67%;">
+<p>概念表示：</p>
+<ul>
+<li>Big Model：复杂强大的教师网络</li>
+<li>Small Model：轻巧简单的学生网络</li>
+<li>soft targets：输入x经过教师网络后得到的softmax层输出</li>
+<li>hard targets：输入数据对应的label标签</li>
+<li>softmax公式表示：</li>
+</ul>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/BnSNEaficFAYEibUD3rzPCqDh6vuY6PI8QASn9mVZmicENzRDynxxSG1jiaK33e4S9ULoKjNOictMiaMCiaTxHnXSJAaA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt="图片"></p>
+<p>其中， <img src="https://www.zhihu.com/equation?tex=qi" alt="[公式]"> 是第i类的概率， <img src="https://www.zhihu.com/equation?tex=Zi+" alt="[公式]"> 和 <img src="https://www.zhihu.com/equation?tex=Zj" alt="[公式]"> 分别表示softmax层输出， <img src="https://www.zhihu.com/equation?tex=T" alt="[公式]"> 是温度系数，控制着输出概率的软化（soft）程度， <img src="https://www.zhihu.com/equation?tex=T" alt="[公式]"> 越大，不同类别输出概率在不改变相对大小关系的情况下，差值会越小，也就是更加soft。</p>
+<p>定义好基本概念后，实现步骤可以表示为：</p>
+<ol>
+<li>设置一个较大的 <img src="https://www.zhihu.com/equation?tex=T+" alt="[公式]"> ，输入x训练一个教师网络，经过softmax层后生成soft targets。</li>
+<li>使用步骤1得到的soft targets来训练学生网络。</li>
+<li>最终模型的目标函数由soft targets 和学生网络的输出数据的交叉熵，hard targets 和学生网络的输出数据的交叉熵两部分共同组成。</li>
+</ol>
+<p>这些训练步骤，能够保证学生网络和教师网络的结果尽可能一致，也就代表学生网络学到了教师网络的知识；能够保证学生网络的结果和实际类别标签尽可能一致，也就代表学生网络的能力很强。</p>
+<p>在本文中，作者剥离了教师，学生网络的概念，提出了一个与蒸馏模型不同但又相关的概念——<strong>相互学习</strong>（mutual learning）。通过上文的介绍我们知道，蒸馏模型从一个强大的、预先培训过的教师网络开始，然后将知识传递给一个小的、未经训练的学生网络，这种传递方式是一条单向的通路。与之相反，在相互学习中，从一组未经训练的学生网络开始，它们同时学习，共同解决任务。在训练过程中，每个学生网络的损失函数由两部分组成：（1）传统的监督学习损失（2）模仿损失，使每个学生的预测类别与其他学生的类别预测概率保持一致。实验证明，在这种基于同伴教学（peer-teaching）的训练中，每个学生网络的学习效果都比在传统的监督学习场景中单独学习要好得多。此外，虽然传统的蒸馏模型需要一个比预期学生网络更大、更强大的教师网络，但事实证明，在许多情况下，几个大型网络的相互学习也比独立学习提高了性能。</p>
+<p>**为什么这种相互学习的策略会比蒸馏模型更有用？**如果整个训练过程都是从一个小的且未经预训练的网络开始，那么网络中额外的知识从哪里产生？为什么它会收敛的好，而不是被群体思维所束缚，造成“瞎子带领瞎子&quot;（the blind lead the blind）的局面？</p>
+<p>针对这些疑问，作者给出了相应的解释：每个学生网络主要受传统的监督学习损失的指导，这意味着他们的表现通常会提高，而且也限制了他们作为一个群体任意地进行群体思维的能力。有了监督学习，所有的网络很快就可以为每个训练实例预测相同的标签，这些标签大多是正确且相同的。但是由于每个网络从不同的初始条件开始，它们对下一个最有可能的类的概率的估计是不同的，而正是这些secondary信息，为蒸馏和相互学习提供了额外的知识。在相互学习网络中，每个学生网络有效地汇集了他们对下一个最有可能的类别的集体估计，根据每个训练实例找出并匹配其他最有可能的类会增加每个学生网络的后验熵，这有助于得到一个更健壮和泛化能力更强的网络。</p>
+<p>综上所述，相互学习通过利用一组小的未经训练的网络协作进行训练，可以简洁而有效的提高网络的泛化能力。实验结果表明，与经过预训练的静态大型网络相比，同伴相互学习可以获得更好的性能。此外，作者认为相互学习还有以下几点优势：</p>
+<ol>
+<li>网络效果随队列中网络的数量增加而增加</li>
+<li>相互学习适用于各种网络架构，以及由不同大小的混合网络组成的异构群组</li>
+<li>与独立训练相比，即使是在队列中相互训练的大型网络也能提高性能</li>
+<li>虽然作者的重点是获得一个单一有效的网络，但整个队列也可以整合为一个高效的集成模型。</li>
+</ol>
+<h2 id="deep-mutual-learning"><a class="markdownIt-Anchor" href="#deep-mutual-learning"></a> Deep Mutual Learning</h2>
+<ul>
+<li><strong>DML通用表示</strong></li>
+</ul>
+<p><strong>如下图所示，本文提出的DML网络，在队列中有两个网络θ1，θ2。</strong></p>
+<p>给定来自 <img src="https://www.zhihu.com/equation?tex=M" alt="[公式]">个类别的 <img src="https://www.zhihu.com/equation?tex=N" alt="[公式]"> 个样本，表示为：</p>
+<p><img src="https://pic4.zhimg.com/80/v2-1d62051daa019e8e3ca47677e0c3456b_1440w.png" alt="img"></p>
+<p>其对应的标签集合为：</p>
+<p><img src="https://pic1.zhimg.com/80/v2-e484327cfacd0f21019a9dc99c4ab69c_1440w.png" alt="img"></p>
+<p>那么θ1网络中某个样本 <img src="https://www.zhihu.com/equation?tex=xi" alt="[公式]"> 属于类别 <img src="https://www.zhihu.com/equation?tex=m" alt="[公式]"> 的概率可以表示为：</p>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>p</mi><mn>1</mn><mi>m</mi></msubsup><mrow><mo fence="true">(</mo><msub><mi mathvariant="bold-italic">x</mi><mi>i</mi></msub><mo fence="true">)</mo></mrow><mo>=</mo><mfrac><mrow><mi>exp</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msubsup><mi>z</mi><mn>1</mn><mi>m</mi></msubsup><mo fence="true">)</mo></mrow></mrow><mrow><munderover><mo>∑</mo><mrow><mi>m</mi><mo>=</mo><mn>1</mn></mrow><mi>M</mi></munderover><mi>exp</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msubsup><mi>z</mi><mn>1</mn><mi>m</mi></msubsup><mo fence="true">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">p_{1}^{m}\left(\boldsymbol{x}_{i}\right)=\frac{\exp \left(z_{1}^{m}\right)}{\sum_{m=1}^{M} \exp \left(z_{1}^{m}\right)}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7143919999999999em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">m</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">x</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.597941em;vertical-align:-1.170941em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.128769em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.981231em;"><span style="top:-2.40029em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">m</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.10903em;">M</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.29971000000000003em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">exp</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6461920000000001em;"><span style="top:-2.433692em;margin-left:-0.04398em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span><span style="top:-3.0448000000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">m</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.26630799999999993em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop">exp</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-2.4518920000000004em;margin-left:-0.04398em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">m</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24810799999999997em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.170941em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>其中， <img src="https://www.zhihu.com/equation?tex=z%5E%7Bm%7D" alt="[公式]"> 是θ1网络中经过softmax层前输出的预测概率。</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/BnSNEaficFAYEibUD3rzPCqDh6vuY6PI8QBibVpE1MjjZk9ZsbqBunnCElsa7ny03aiah55t7UjrQIB6n5QIA5LyqA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt="图片"></p>
+<p>对于多目标分类任务而言，θ1网络的目标函数可以用交叉熵表示：</p>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>L</mi><msub><mi>C</mi><mn>1</mn></msub></msub><mo>=</mo><mo>−</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></munderover><munderover><mo>∑</mo><mrow><mi>m</mi><mo>=</mo><mn>1</mn></mrow><mi>M</mi></munderover><mi>I</mi><mrow><mo fence="true">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo separator="true">,</mo><mi>m</mi><mo fence="true">)</mo></mrow><mi>log</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msubsup><mi>p</mi><mn>1</mn><mi>m</mi></msubsup><mrow><mo fence="true">(</mo><msub><mi mathvariant="bold-italic">x</mi><mi>i</mi></msub><mo fence="true">)</mo></mrow><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">L_{C_{1}}=-\sum_{i=1}^{N} \sum_{m=1}^{M} I\left(y_{i}, m\right) \log \left(p_{1}^{m}\left(\boldsymbol{x}_{i}\right)\right)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.93343em;vertical-align:-0.2501em;"></span><span class="mord"><span class="mord mathdefault">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:-0.07153em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2501em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.106005em;vertical-align:-1.277669em;"></span><span class="mord">−</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283360000000002em;"><span style="top:-1.872331em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.050005em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3000050000000005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.10903em;">N</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.277669em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283360000000002em;"><span style="top:-1.882887em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">m</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.050005em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3000050000000005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.10903em;">M</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.267113em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.07847em;">I</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault">m</span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathdefault">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7143919999999999em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">m</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">x</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mclose delimcenter" style="top:0em;">)</span></span></span></span></span></span></p>
+<p>其中， <img src="https://www.zhihu.com/equation?tex=I" alt="[公式]"> 相当于一个指示函数，如下式所示，如果标签值和预测值相同，置为1，否则置为0：</p>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>I</mi><mrow><mo fence="true">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo separator="true">,</mo><mi>m</mi><mo fence="true">)</mo></mrow><mo>=</mo><mrow><mo fence="true">{</mo><mtable rowspacing="0.15999999999999992em" columnalign="left left" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>1</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><msub><mi>y</mi><mi>i</mi></msub><mo>=</mo><mi>m</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><msub><mi>y</mi><mi>i</mi></msub><mi mathvariant="normal">≠</mi><mi>m</mi></mrow></mstyle></mtd></mtr></mtable></mrow></mrow><annotation encoding="application/x-tex">I\left(y_{i}, m\right)=\left\{\begin{array}{ll}
+1 &amp; y_{i}=m \\
+0 &amp; y_{i} \neq m
+\end{array}\right.
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.07847em;">I</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault">m</span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.40003em;vertical-align:-0.95003em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">{</span></span><span class="mord"><span class="mtable"><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span><span style="top:-2.4099999999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9500000000000004em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord mathdefault">m</span></span></span><span style="top:-2.4099999999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel"><span class="mrel"><span class="mord"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="rlap"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="inner"><span class="mrel"></span></span><span class="fix"></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.19444em;"><span></span></span></span></span></span></span><span class="mrel">=</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord mathdefault">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9500000000000004em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>传统的监督损失训练能够帮助网络预测实例的正确标签，为了进一步提升网络θ1的泛化能力，DML引入了同伴网络θ2，θ2同样会产生一个预测概率p2，在这里引入KL散度的概念，KL 散度是一种衡量两个概率分布的匹配程度的指标，两个分布差异越大，KL散度越大。</p>
+<p>综上，对于θ1网络来说，此时总的损失函数就由两部分构成：自身监督损失函数，来自θ2网络的匹配损失函数：</p>
+<p><img src="https://pic1.zhimg.com/80/v2-aed8b0338027da9f1ade012cd544d0a0_1440w.png" alt="img"></p>
+<p>同理，θ2可以表示为：</p>
+<p><img src="https://pic3.zhimg.com/80/v2-f401129423b17da31fd8f9212db97862_1440w.png" alt="img"></p>
+<ul>
+<li><strong>算法优化</strong></li>
+</ul>
+<p><strong>DML</strong>在每次训练迭代中，都计算两个模型的预测，并根据另一个模型的预测更新两个网络的参数。θ1和θ2网络一直在迭代直至收敛，整个训练优化细节如下图所示：</p>
+<p><img src="/images/Deep%20Mutual%20Learning/image-20211130143213341.png" alt></p>
+<ul>
+<li><strong>学生网络的扩展</strong></li>
+</ul>
+<p><strong>前面是使用两个网络的情况</strong>θ1和θ2说明了DML的结构，算法。DML不仅在两个网络中有效，还可以扩展到多个网络中去。假定我们要训练一个有K（K&gt;2）个学生网络的互相学习网络，那么对于其中的某个网络θk而言，总的损失函数可以表示为：</p>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>L</mi><msub><mi mathvariant="normal">Θ</mi><mi>k</mi></msub></msub><mo>=</mo><msub><mi>L</mi><msub><mi>C</mi><mi>k</mi></msub></msub><mo>+</mo><mfrac><mn>1</mn><mrow><mi>K</mi><mo>−</mo><mn>1</mn></mrow></mfrac><munderover><mo>∑</mo><mrow><mi>l</mi><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mi>l</mi><mi mathvariant="normal">≠</mi><mi>k</mi></mrow><mi>K</mi></munderover><msub><mi>D</mi><mrow><mi>K</mi><mi>L</mi></mrow></msub><mrow><mo fence="true">(</mo><msub><mi mathvariant="bold-italic">p</mi><mi>l</mi></msub><mi mathvariant="normal">∥</mi><msub><mi mathvariant="bold-italic">p</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">L_{\Theta_{k}}=L_{C_{k}}+\frac{1}{K-1} \sum_{l=1, l \neq k}^{K} D_{K L}\left(\boldsymbol{p}_{l} \| \boldsymbol{p}_{k}\right)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.93919em;vertical-align:-0.25586em;"></span><span class="mord"><span class="mord mathdefault">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mtight">Θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3487714285714287em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15122857142857138em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.25586em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.93919em;vertical-align:-0.25586em;"></span><span class="mord"><span class="mord mathdefault">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3487714285714287em;margin-left:-0.07153em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15122857142857138em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.25586em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:3.266557em;vertical-align:-1.438221em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.32144em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">1</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.7693300000000001em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283360000000002em;"><span style="top:-1.8478869999999998em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span><span class="mrel mtight">=</span><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span><span class="mrel mtight"><span class="mrel mtight"><span class="mord mtight"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-2.7em;"><span class="pstrut" style="height:2.7em;"></span><span class="rlap mtight"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="inner"><span class="mrel mtight"></span></span><span class="fix"></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.19444em;"><span></span></span></span></span></span></span><span class="mrel mtight">=</span></span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span><span style="top:-3.0500049999999996em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.300005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.438221em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">K</span><span class="mord mathdefault mtight">L</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.24196799999999993em;"><span style="top:-2.4558600000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24414em;"><span></span></span></span></span></span></span><span class="mord">∥</span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.24196799999999993em;"><span style="top:-2.4558600000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24414em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span></span></span></span></span></p>
+<p>该公式说明，每个学生网络都能够从另外的K-1个网络中学到知识，换而言之，对于一个学生网络，另外的K-1个网络都能作为该网络的教师网络。K=2就是该扩展网络的特例。在上式中，对于其他网络的KL散度和，前面添加了权重系数 <img src="https://www.zhihu.com/equation?tex=%5Cfrac%7B1%7D%7BK-1%7D" alt="[公式]"> ，这是为了确保整个训练过程主要以监督学习的真正标签为指导。</p>
+<p>对于两个以上的网络，除了DML训练策略外，在K个网络的训练中，对于一个学生网络，我们还可以将所有其他的k-1个网络集成作为一个单独的教师网络来提供综合平均的学习知识。这种思想与蒸馏模型类似，但是在参数更新上，在每个mini-batch上进行更新。基于这种思想，一个学生网络 <img src="https://www.zhihu.com/equation?tex=%5Ctheta+k" alt="[公式]"> 的损失函数可以表示为：</p>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>L</mi><msub><mi mathvariant="normal">Θ</mi><mi>k</mi></msub></msub><mo>=</mo><msub><mi>L</mi><msub><mi>C</mi><mi>k</mi></msub></msub><mo>+</mo><msub><mi>D</mi><mrow><mi>K</mi><mi>L</mi></mrow></msub><mrow><mo fence="true">(</mo><msub><mi mathvariant="bold-italic">p</mi><mrow><mi>a</mi><mi>v</mi><mi>g</mi></mrow></msub><mi mathvariant="normal">∥</mi><msub><mi mathvariant="bold-italic">p</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow><mo separator="true">,</mo><mspace width="1em"><msub><mi mathvariant="bold-italic">p</mi><mrow><mi>a</mi><mi>v</mi><mi>g</mi></mrow></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mi>K</mi><mo>−</mo><mn>1</mn></mrow></mfrac><munderover><mo>∑</mo><mrow><mi>l</mi><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mi>l</mi><mi mathvariant="normal">≠</mi><mi>k</mi></mrow><mi>K</mi></munderover><msub><mi mathvariant="bold-italic">p</mi><mi>l</mi></msub></mspace></mrow><annotation encoding="application/x-tex">L_{\Theta_{k}}=L_{C_{k}}+D_{K L}\left(\boldsymbol{p}_{a v g} \| \boldsymbol{p}_{k}\right), \quad \boldsymbol{p}_{a v g}=\frac{1}{K-1} \sum_{l=1, l \neq k}^{K} \boldsymbol{p}_{l}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.93919em;vertical-align:-0.25586em;"></span><span class="mord"><span class="mord mathdefault">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mtight">Θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3487714285714287em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15122857142857138em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.25586em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.93919em;vertical-align:-0.25586em;"></span><span class="mord"><span class="mord mathdefault">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3487714285714287em;margin-left:-0.07153em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15122857142857138em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.25586em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.230248em;vertical-align:-0.380248em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">K</span><span class="mord mathdefault mtight">L</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size1">(</span></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.057252000000000025em;"><span style="top:-2.4558600000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">v</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">g</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.380248em;"><span></span></span></span></span></span></span><span class="mord">∥</span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.24196799999999993em;"><span style="top:-2.4558600000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24414em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size1">)</span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mspace" style="margin-right:1em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.057252000000000025em;"><span style="top:-2.4558600000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">v</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">g</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.380248em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.266557em;vertical-align:-1.438221em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.32144em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">1</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.7693300000000001em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283360000000002em;"><span style="top:-1.8478869999999998em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span><span class="mrel mtight">=</span><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span><span class="mrel mtight"><span class="mrel mtight"><span class="mord mtight"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-2.7em;"><span class="pstrut" style="height:2.7em;"></span><span class="rlap mtight"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="inner"><span class="mrel mtight"></span></span><span class="fix"></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.19444em;"><span></span></span></span></span></span></span><span class="mrel mtight">=</span></span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span><span style="top:-3.0500049999999996em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.300005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.438221em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.24196799999999993em;"><span style="top:-2.4558600000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24414em;"><span></span></span></span></span></span></span></span></span></span></span></p>
+<h2 id="experiments"><a class="markdownIt-Anchor" href="#experiments"></a> Experiments</h2>
+<p>主要是两方面的实验，利用CIFAR-100和Market-1501两个数据集分别进行目标分类和人物重识别任务测试。</p>
+<ul>
+<li><strong>Results on CIFAR-100</strong></li>
+</ul>
+<p>在CIFAR-100上进行top-1指标测试。首先对只有两个网络的DML进行测试。采用不同的网络结构，结果如下表所示，可以看到，相比独立的分类网络，基于任何组合方式的，添加DML策略的网络，表现都有所提升；体量较小的网络(如ResNet-32），从DML中提升更多；在大网络（如WRN-28-10）中添加DML策略，也会使得性能得到提升，与传统的蒸馏模型相比，可以看到一个大型的预培训的教师网络并非必要条件。</p>
+<p><img src="/images/Deep%20Mutual%20Learning/image-20211130145027518.png" alt></p>
+<ul>
+<li><strong>Results on Market-1501</strong></li>
+</ul>
+<p>在Market-1501上进行mAP和rank-1指标测试。每个MobileNet在一个双网络队列中训练，并计算队列中两个网络的平均性能。如下表所示，与单独学习相比，DML显著的提升了MobileNet的性能，我们还可以看到，使用两个MobileNet训练的DML方法的性能显著优于先前最主流的方法。</p>
+<p><img src="/images/Deep%20Mutual%20Learning/image-20211130145043461.png" alt></p>
+<ul>
+<li><strong>Comparison with Distillation</strong></li>
+</ul>
+<p>本文提出的DML模型与蒸馏模型密切相关，因此作者对比了这两个模型的效果。如下表所示，设置了三组网络，分别是：独立网络net1，net2；蒸馏模型net1为教师网络，net2为学生网络；DML模型，net1和net2相互学习。从实验结果分析，意料之中，传统的蒸馏方法从一个强大的预训练的教师网络指导学生网络的确实提升了性能。但结果同样表明，预训练的强大教师网络不是必要条件，与蒸馏模型相比，在DML中一起训练的两个网络也获得了明显的提升。</p>
+<p><img src="/images/Deep%20Mutual%20Learning/image-20211130145100906.png" alt></p>
+<ul>
+<li><strong>How and Why does DML Work？</strong></li>
+</ul>
+<p><strong>上述实验部分证明了DML的有效性，我们再从理论上讨论一下DML为什么能够提升以及通过哪些方法进行提升。</strong></p>
+<p><strong>（1）Better Quality Solutions with More Robust Minima</strong></p>
+<p>与传统的优化方法相比，DML不是帮助我们找到一个更好的或者更深层次的训练损失最小值，而是帮助我们找到一个更广泛或者更可靠的最小值，它能更好地概括测试数据，更加健壮。作者利用Market-1501数据集和MobileNet主干网络做了一个小实验来证明DML能够找到更鲁棒的最小值。作者比较了DML模型和独立模型在添加高斯噪声前后训练的损失变化。从图（a）可以看出两个模型的极小值的深度是相同的，但是在加入高斯噪声后，独立模型的训练损失增加较多，而DML模型的训练损失较少。这表明DML模型找到了一个更广泛，健壮的最小值，进而提供更好的泛化性能。</p>
+<p><img src="/images/Deep%20Mutual%20Learning/image-20211130145121174.png" alt></p>
+<p><strong>（2）How a Better Minima is Found</strong></p>
+<p>**那么DML是怎样找到这个广泛健壮的最小值的呢？**DML会要求每个网络匹配其同伴网络的概率估计，如果给定网络预测为零，而其对等网络预测为非零，则该网络将受到严重惩罚。总体上，DML是指，当每个网络独立地将一个关注点放在一个小的次概率集合上时，DML中的所有网络都倾向于聚合它们对次级概率的预测。也就是说所有的网络把重心放在次概率上，并且把更多重心放在更明显的次概率上。因此，DML是通过对“合理的”次概率预测的相互概率匹配来寻找更宽泛的最小值。</p>
+<h2 id="conclusion"><a class="markdownIt-Anchor" href="#conclusion"></a> Conclusion</h2>
+<p>本文提出了一种简单且普适的方法DML来提高深度神经网络的性能，方法是将几个网络一起训练，相互蒸馏。用这种方法，可以获得紧凑的网络。实验证明，DML相比传统的蒸馏模型更好更健壮。此外，DML也能提高大型网络的性能，并且以这种方式训练的网络队列可以作为一个集成来进一步提高性能。</p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://yao-chen-ecnu.github.io/2021/11/30/Deep%20Mutual%20Learning/" title="Deep Mutual Learning" target="_blank" rel="external">https://yao-chen-ecnu.github.io/2021/11/30/Deep%20Mutual%20Learning/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/Yao-chen-ecnu" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar1.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/Yao-chen-ecnu" target="_blank"><span class="text-dark">C Y</span><small class="ml-1x">Web Developer &amp; Designer</small></a></h3>
+        <div>记录生活点点滴滴</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    
+    <li class="next">
+      <a href="/2021/11/30/Learning%20Student%20Networks%20in%20the%20Wild/" title="Learning Student Networks in the wild"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/Yao-chen-ecnu" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/6383690155" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+
+</html>
